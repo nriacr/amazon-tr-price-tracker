@@ -1,8 +1,8 @@
 # Amazon.com.tr Fiyat Takibi
 
-Bu proje, `amazon.com.tr` urun sayfalarini veya filtreli arama sonuc sayfalarini belirli araliklarla kontrol edip hedef fiyatin altina inildiginde `Pushover` uzerinden bildirim gonderen kucuk bir bottur.
+Bu proje, `amazon.com.tr` urun sayfalarini veya filtreli arama sonuc sayfalarini belirli araliklarla kontrol edip hedef fiyatin altina inildiginde `Pushover` uzerinden bildirim gonderen Home Assistant add-on'udur.
 
-Ana hedef ortam `Home Assistant OS` yüklü Raspberry Pi'dir. Bu nedenle çözüm, Home Assistant'ta `local add-on` olarak çalıştırılabilecek şekilde paketlendi.
+Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da saklanabilir, Home Assistant'a add-on repository olarak eklenebilir veya local add-on olarak kurulabilir.
 
 ## Ne yapıyor?
 
@@ -11,21 +11,35 @@ Ana hedef ortam `Home Assistant OS` yüklü Raspberry Pi'dir. Bu nedenle çözü
 - Sayfadan urun adi ve fiyat cikarmaya calisir
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller
+- Log satirlarini yerel saatle yazar
 - Durumu `/data/state.json` icinde saklar
 
 ## Klasörler
 
 - `ha-addon/`: Home Assistant add-on dosyaları
+- `YEDEKTEN_YENIDEN_KURULUM.md`: Yedekten yeniden kurulum rehberi
+- `repository.yaml`: Home Assistant add-on repository metadata dosyasi
 
-## Home Assistant OS Kurulumu
+## GitHub Uzerinden Kolay Kurulum
 
-1. `ha-addon` klasörünün içeriğini Raspberry Pi üzerinde `/addons/local/amazon_tr_price_tracker` altına kopyala.
-2. Home Assistant'ı yeniden başlat veya `Settings > Add-ons` ekranını yenile.
-3. Add-on store içinde `Amazon TR Price Tracker` add-on'unu aç.
-4. Yapılandırmayı aşağıdaki örneğe benzer şekilde gir.
-5. Add-on'u başlat.
+Home Assistant'in add-on repository alanina su repo adresi eklenir:
 
-Alternatif olarak bu projeyi GitHub'a koyup ayrı bir add-on repository olarak da yayınlayabilirsin; ilk sürüm için buna gerek yok.
+```txt
+https://github.com/nriacr/amazon-tr-price-tracker
+```
+
+Adimlar:
+
+1. Home Assistant'ta `Settings > Add-ons > Add-on Store` ekranini ac.
+2. Sag ustteki uc nokta menusunden `Repositories` bolumunu ac.
+3. Repo adresini ekle.
+4. Add-on Store ekranini yenile.
+5. `Amazon TR Price Tracker` add-on'unu bul.
+6. `Install` yap.
+7. `Configuration` sekmesine kendi ayarlarini yapistir.
+8. `Save` ve sonra `Start` yap.
+
+Not: Repo private ise Home Assistant repo URL'sini dogrudan okuyamayabilir. Bu durumda `Code > Download ZIP` ile indirip `ha-addon` klasorunu Home Assistant'ta `/addons/local/amazon_tr_price_tracker` konumuna koymak gerekir. Detayli anlatim icin `YEDEKTEN_YENIDEN_KURULUM.md` dosyasina bak.
 
 ## Örnek Yapılandırma
 
@@ -62,6 +76,21 @@ search_watches:
 - Amazon zaman zaman bot korumasi, bolgesel farkliliklar veya HTML degisiklikleri uygulayabilir. Bu durumda secicileri guncellemek gerekebilir.
 - Cok sik sorgu atmak yerine `15-60 dakika` araligi mantiklidir.
 - Arama sonucu takibinde urun karti HTML'i degisirse secicilerde guncelleme gerekebilir.
+- Pushover anahtarlari ve gercek takip listesi GitHub'a konmamalidir.
+
+## Yedekten Yeniden Kurulum
+
+Yeniden kurulum icin ana rehber:
+
+```txt
+YEDEKTEN_YENIDEN_KURULUM.md
+```
+
+Yedek stratejisi:
+
+- Kodlar GitHub reposunda tutulur.
+- Pushover anahtarlari ve gercek takip listesi ayri, guvenli bir `configuration-backup.yaml` dosyasinda saklanir.
+- Yeni Home Assistant kurulumunda once add-on GitHub'dan kurulur, sonra configuration yedegi yapistirilir.
 
 ## Yerel Test
 
