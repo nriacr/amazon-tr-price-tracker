@@ -1,0 +1,34 @@
+name: Amazon TR Price Tracker
+version: "0.1.0"
+slug: amazon_tr_price_tracker
+description: amazon.com.tr fiyatlarını izler ve Pushover bildirimi yollar.
+url: https://example.com/amazon-tr-price-tracker
+arch:
+  - aarch64
+  - armv7
+  - amd64
+startup: services
+boot: auto
+init: false
+options:
+  interval_minutes: 30
+  request_timeout_seconds: 20
+  pushover_user_key: ""
+  pushover_api_token: ""
+  products: []
+  search_watches: []
+schema:
+  interval_minutes: "int(5,1440)"
+  request_timeout_seconds: "int(5,120)"
+  pushover_user_key: "str"
+  pushover_api_token: "str"
+  products:
+    - url: "str"
+      target_price: "float"
+      name: "str?"
+  search_watches:
+    - search_url: "str"
+      product_name: "str"
+      target_price: "float"
+      name: "str?"
+      max_items_to_scan: "int(1,100)?"
