@@ -68,10 +68,10 @@ search_watches:
 - `search_url`: Amazon'da filtreledigin arama veya kategori linki
 - `product_name`: Sonuclarda aranacak metin
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim
-- `name`: Istege bagli, bildirimde gorunecek kisa ad
+- `name`: Configuration ekraninda liste satirlarini ayirt etmek icin zorunlu kisa ad
 - `max_items_to_scan`: Ilk kac urun kartinin taranacagi
 
-Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alanini en uste yazmak onerilir.
+Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
 
 ## Notlar
 
