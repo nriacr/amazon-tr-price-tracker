@@ -92,8 +92,12 @@ class TrackerError(Exception):
 
 
 def log(message: str) -> None:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now().astimezone().isoformat()
     print(f"[{now}] {message}", flush=True)
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -283,6 +287,16 @@ def extract_card_price(card: BeautifulSoup) -> Optional[Decimal]:
                 return parse_decimal(text)
             except TrackerError:
                 continue
+
+    full_text = card.get_text(" ", strip=True)
+    match = re.search(r"(\d{1,3}(?:\.\d{3})*,\d{2})\s*TL", full_text)
+    if match:
+        return parse_decimal(match.group(1))
+
+    match = re.search(r"(\d+(?:,\d{2})?)\s*TL", full_text)
+    if match:
+        return parse_decimal(match.group(1))
+
     return None
 
 
@@ -417,11 +431,11 @@ def update_state_entry(
 ) -> Dict[str, Any]:
     updated = dict(state_entry)
     updated["last_price"] = str(current_price)
-    updated["last_checked_at"] = datetime.now(timezone.utc).isoformat()
+    updated["last_checked_at"] = utc_now()
     updated["was_below_target"] = current_price <= target_price
     if alert_sent:
         updated["last_alerted_price"] = str(current_price)
-        updated["last_alerted_at"] = datetime.now(timezone.utc).isoformat()
+        updated["last_alerted_at"] = utc_now()
     return updated
 
 
@@ -481,7 +495,7 @@ def check_products_once() -> None:
             log(f"Hata: {product.url} | {exc}")
             state[product_key] = dict(state_entry)
             state[product_key]["last_error"] = str(exc)
-            state[product_key]["last_checked_at"] = datetime.now(timezone.utc).isoformat()
+            state[product_key]["last_checked_at"] = utc_now()
 
     for watch in search_watches:
         watch_key = normalize_item_key(watch.search_url, watch.product_name)
@@ -542,14 +556,14 @@ def check_products_once() -> None:
             state[watch_key] = {
                 "items": updated_items_state,
                 "last_match_count": len(matches),
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                "last_checked_at": utc_now(),
                 "last_error": None,
             }
         except Exception as exc:  # noqa: BLE001
             log(f"Hata: {watch.search_url} | {exc}")
             state[watch_key] = dict(watch_state)
             state[watch_key]["last_error"] = str(exc)
-            state[watch_key]["last_checked_at"] = datetime.now(timezone.utc).isoformat()
+            state[watch_key]["last_checked_at"] = utc_now()
 
     save_json(STATE_PATH, state)
 
