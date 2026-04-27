@@ -58,15 +58,15 @@ pushover_user_key: "PUSHOVER_USER_KEY"
 pushover_api_token: "PUSHOVER_API_TOKEN"
 
 products:
-  - url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
+  - name: "Tek urun takibi"
+    url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
     target_price: 25000
-    name: "Tek urun takibi"
 
 search_watches:
-  - search_url: "https://www.amazon.com.tr/s?..."
+  - name: "iPad Air 13 arama takibi"
+    search_url: "https://www.amazon.com.tr/s?..."
     product_name: "ipad air 13"
     target_price: 35000
-    name: "iPad Air 13 arama takibi"
     max_items_to_scan: 24
 ```
 
@@ -81,10 +81,10 @@ pushover_api_token: "PUSHOVER_API_TOKEN"
 products: []
 
 search_watches:
-  - search_url: "https://www.amazon.com.tr/s?..."
+  - name: "iPad Air 13 arama takibi"
+    search_url: "https://www.amazon.com.tr/s?..."
     product_name: "ipad air 13"
     target_price: 35000
-    name: "iPad Air 13 arama takibi"
     max_items_to_scan: 24
 ```
 
