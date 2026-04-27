@@ -88,6 +88,8 @@ search_watches:
     max_items_to_scan: 24
 ```
 
+`name` alanı zorunludur. Home Assistant Configuration ekranında liste satırlarının link yerine isimle görünmesi için her `products` ve `search_watches` kaydında `name` satırı en üstte olmalıdır.
+
 ## Yeni Home Assistant'a Geri Kurulum
 
 En kolay yol, GitHub reposunu Home Assistant add-on repository olarak eklemektir.
