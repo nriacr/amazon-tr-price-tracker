@@ -90,6 +90,71 @@ search_watches:
 
 ## Yeni Home Assistant'a Geri Kurulum
 
+En kolay yol, GitHub reposunu Home Assistant add-on repository olarak eklemektir.
+
+GitHub repo:
+
+```txt
+https://github.com/nriacr/amazon-tr-price-tracker
+```
+
+Not: Home Assistant'ın add-on repository alanı private GitHub repolarını her zaman doğrudan okuyamaz. En kolay yöntem için bu repoyu public yapmak yeterlidir, çünkü bu repoda Pushover anahtarları ve gerçek takip listen yoktur. Repo private kalacaksa aşağıdaki "Private Repo Kalacaksa" bölümünü kullan.
+
+## GitHub Uzerinden Kolay Kurulum
+
+1. Yeni Home Assistant OS kurulumunu tamamla.
+2. Home Assistant arayüzünde `Settings > Add-ons > Add-on Store` ekranını aç.
+3. Sağ üstteki üç nokta menüsünden `Repositories` bölümünü aç.
+4. Şu repo adresini ekle:
+
+```txt
+https://github.com/nriacr/amazon-tr-price-tracker
+```
+
+5. `Add` veya `Save` ile kaydet.
+6. Add-on Store ekranını yenile.
+7. `Amazon TR Price Tracker` add-on'unu bul.
+8. `Install` yap.
+9. `Configuration` sekmesine güvenli yerde sakladığın configuration yedeğini yapıştır.
+10. `Save` yap.
+11. `Start` yap.
+12. `Log` sekmesinde şu satırı gör:
+
+```txt
+Servis basladi. Kontrol araligi: 30 dakika
+```
+
+Bu yöntem için repoda şu dosyalar bulunmalıdır:
+
+```txt
+repository.yaml
+ha-addon/config.yaml
+ha-addon/Dockerfile
+ha-addon/run.sh
+ha-addon/app/requirements.txt
+ha-addon/app/main.py
+```
+
+## Private Repo Kalacaksa
+
+Repo private kalırsa Home Assistant add-on store'a URL eklemek başarısız olabilir. Bu durumda güvenli yöntem:
+
+1. GitHub'a giriş yap.
+2. `https://github.com/nriacr/amazon-tr-price-tracker` reposunu aç.
+3. `Code > Download ZIP` ile dosyaları indir.
+4. ZIP içindeki `ha-addon` klasörünü Home Assistant'ta şu konuma koy:
+
+```txt
+/addons/local/amazon_tr_price_tracker
+```
+
+5. Home Assistant'ı yeniden başlat veya Add-on Store ekranını yenile.
+6. `Amazon TR Price Tracker` add-on'unu kur.
+7. Configuration yedeğini yapıştır.
+8. `Start` yap.
+
+## Manuel Geri Kurulum
+
 1. Yeni Home Assistant OS kurulumunu tamamla.
 2. `Settings > Add-ons` bölümünden terminal/SSH eklentisi kur.
 3. Terminali aç.
