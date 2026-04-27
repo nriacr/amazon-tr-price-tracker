@@ -49,17 +49,17 @@ request_timeout_seconds: 20
 pushover_user_key: "PUSHOVER_USER_KEY"
 pushover_api_token: "PUSHOVER_APP_TOKEN"
 products:
-  - url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
+  - name: "iPhone 16"
+    url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
     target_price: 24999.90
-    name: "iPhone 16"
-  - url: "https://www.amazon.com.tr/dp/B0YYYYYYYY"
+  - name: "Kulaklık"
+    url: "https://www.amazon.com.tr/dp/B0YYYYYYYY"
     target_price: 1299
-    name: "Kulaklık"
 search_watches:
-  - search_url: "https://www.amazon.com.tr/s?..."
+  - name: "iPad arama takibi"
+    search_url: "https://www.amazon.com.tr/s?..."
     product_name: "ipad air 128"
     target_price: 22000
-    name: "iPad arama takibi"
     max_items_to_scan: 24
 ```
 
@@ -70,6 +70,8 @@ search_watches:
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim
 - `name`: Istege bagli, bildirimde gorunecek kisa ad
 - `max_items_to_scan`: Ilk kac urun kartinin taranacagi
+
+Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alanini en uste yazmak onerilir.
 
 ## Notlar
 
