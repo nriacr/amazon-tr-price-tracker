@@ -28,7 +28,7 @@ Amazon TR Price Tracker add-on Configuration içeriği
 
 Bu ayarın içinde Pushover anahtarları, takip edilen ürün linkleri, arama linkleri, keyword değerleri ve hedef fiyatlar bulunur.
 
-Not: Arama takibi varsayilan olarak `notify_once: true` calisir. Ayni urun bir kez bildirildikten sonra tekrar bildirim gondermez. Fiyat daha da dusunce tekrar bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
+Not: Arama takibi varsayilan olarak `notify_once: true` calisir. Ayni urun bir kez bildirildikten sonra kalici `notified_items` listesine eklenir ve indirim devam ettigi surece tekrar bildirim gondermez. Fiyat daha da dusunce tekrar bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
 
 ## Önerilen Yedek Paketi
 
