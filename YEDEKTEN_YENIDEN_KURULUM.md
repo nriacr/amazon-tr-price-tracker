@@ -214,13 +214,13 @@ Bu sürümde log satırları yerel saatle yazılır.
 Örnek:
 
 ```txt
-[2026-04-27T12:30:00+03:00] Servis basladi.
+[2026-04-27 12:30:00] Servis basladi.
 ```
 
 Eğer loglar 3 saat geriden görünürse `main.py` içinde şu satır kontrol edilmeli:
 
 ```python
-now = datetime.now().astimezone().isoformat()
+now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
 ```
 
 ## Sorun Giderme
