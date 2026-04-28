@@ -28,6 +28,8 @@ Amazon TR Price Tracker add-on Configuration içeriği
 
 Bu ayarın içinde Pushover anahtarları, takip edilen ürün linkleri, arama linkleri, keyword değerleri ve hedef fiyatlar bulunur.
 
+Not: Arama takibi, Amazon'un her kontrolde degisebilen arama sonuc linklerini sabit urun linkine cevirir. Bu sayede ayni urun hedef fiyat altinda kaldigi surece her kontrolde tekrar bildirim gondermez; fiyat daha da duserse tekrar bildirir.
+
 ## Önerilen Yedek Paketi
 
 Bir klasör oluşturup içine şunları koy:
@@ -87,8 +89,6 @@ search_watches:
     target_price: 35000
     max_items_to_scan: 24
 ```
-
-`name` alanı zorunludur. Home Assistant Configuration ekranında liste satırlarının link yerine isimle görünmesi için her `products` ve `search_watches` kaydında `name` satırı en üstte olmalıdır.
 
 ## Yeni Home Assistant'a Geri Kurulum
 
