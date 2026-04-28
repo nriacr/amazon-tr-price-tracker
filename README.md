@@ -11,7 +11,7 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 - Sayfadan urun adi ve fiyat cikarmaya calisir
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller
-- Arama sonuc linklerini sabit urun linkine cevirerek ayni urunu tekrar tekrar bildirmez
+- Arama sonucunda bildirilen urunleri kalici olarak hatirlayip tekrar bildirmez
 - Log satirlarini yerel saatle yazar
 - Durumu `/data/state.json` icinde saklar
 
@@ -76,7 +76,7 @@ search_watches:
 
 Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
 
-Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat altinda bir kez bildirildikten sonra, fiyat daha da dusse bile tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
+Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat altinda bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her 15 dakikada tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
 
 ## Notlar
 
