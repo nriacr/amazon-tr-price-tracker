@@ -28,7 +28,7 @@ Amazon TR Price Tracker add-on Configuration içeriği
 
 Bu ayarın içinde Pushover anahtarları, takip edilen ürün linkleri, arama linkleri, keyword değerleri ve hedef fiyatlar bulunur.
 
-Not: Arama takibi, Amazon'un her kontrolde degisebilen arama sonuc linklerini sabit urun linkine cevirir. Bu sayede ayni urun hedef fiyat altinda kaldigi surece her kontrolde tekrar bildirim gondermez; fiyat daha da duserse tekrar bildirir.
+Not: Arama takibi varsayilan olarak `notify_once: true` calisir. Ayni urun bir kez bildirildikten sonra tekrar bildirim gondermez. Fiyat daha da dusunce tekrar bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
 
 ## Önerilen Yedek Paketi
 
@@ -70,6 +70,7 @@ search_watches:
     product_name: "ipad air 13"
     target_price: 35000
     max_items_to_scan: 24
+    notify_once: true
 ```
 
 Sadece arama modu kullanıyorsan:
@@ -88,6 +89,7 @@ search_watches:
     product_name: "ipad air 13"
     target_price: 35000
     max_items_to_scan: 24
+    notify_once: true
 ```
 
 ## Yeni Home Assistant'a Geri Kurulum
