@@ -62,6 +62,7 @@ CARD_TITLE_SELECTORS = [
     "a.a-link-normal span",
 ]
 AMAZON_BASE_URL = "https://www.amazon.com.tr"
+ASIN_URL_PATTERN = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})")
 
 
 @dataclass
@@ -252,6 +253,21 @@ def make_absolute_url(raw_url: str) -> str:
     return f"{AMAZON_BASE_URL}/{raw_url}"
 
 
+def extract_asin_from_url(url: str) -> Optional[str]:
+    match = ASIN_URL_PATTERN.search(url)
+    if not match:
+        return None
+    return match.group(1)
+
+
+def canonical_product_url(raw_url: str, fallback_asin: Optional[str] = None) -> str:
+    absolute_url = make_absolute_url(raw_url)
+    asin = extract_asin_from_url(absolute_url) or fallback_asin
+    if asin:
+        return f"{AMAZON_BASE_URL}/dp/{asin}"
+    return absolute_url.split("?", 1)[0]
+
+
 def normalize_text(value: str) -> str:
     value = value.casefold()
     value = re.sub(r"\s+", " ", value)
@@ -300,7 +316,9 @@ def extract_card_price(card: BeautifulSoup) -> Optional[Decimal]:
     return None
 
 
-def extract_card_url(card: BeautifulSoup) -> Optional[str]:
+def extract_card_url(
+    card: BeautifulSoup, fallback_asin: Optional[str] = None
+) -> Optional[str]:
     link = (
         card.select_one("h2 a[href]")
         or card.select_one("a[href*='/dp/']")
@@ -312,7 +330,7 @@ def extract_card_url(card: BeautifulSoup) -> Optional[str]:
     href = str(link.get("href", "")).strip()
     if not href:
         return None
-    return make_absolute_url(href)
+    return canonical_product_url(href, fallback_asin)
 
 
 def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResultItem]:
@@ -327,7 +345,7 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
     results: List[SearchResultItem] = []
     seen_urls = set()
     for card in cards:
-        asin = str(card.get("data-asin", "")).strip()
+        asin = str(card.get("data-asin", "")).strip() or None
         if card.name == "div" and card.has_attr("data-asin") and not asin:
             continue
         if len(results) >= max_items_to_scan:
@@ -335,9 +353,7 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
 
         title = extract_card_title(card)
         price = extract_card_price(card)
-        url = extract_card_url(card)
-        if asin and (not url or "/dp/" not in url):
-            url = f"{AMAZON_BASE_URL}/dp/{asin}"
+        url = extract_card_url(card, asin)
         if not title or price is None or not url:
             continue
         if url in seen_urls:
