@@ -135,6 +135,16 @@ def parse_decimal(raw_value: str) -> Decimal:
         raise TrackerError(f"Fiyat ayrıştırılamadı: {raw_value!r}") from exc
 
 
+def parse_bool(raw_value: Any, default: bool = False) -> bool:
+    if raw_value is None:
+        return default
+    if isinstance(raw_value, bool):
+        return raw_value
+    if isinstance(raw_value, str):
+        return raw_value.strip().casefold() in {"1", "true", "yes", "on", "evet"}
+    return bool(raw_value)
+
+
 def load_config() -> Tuple[
     int, int, str, str, List[ProductConfig], List[SearchWatchConfig]
 ]:
@@ -165,7 +175,7 @@ def load_config() -> Tuple[
         target_price = parse_decimal(str(item["target_price"]))
         name = str(item["name"]).strip() if item.get("name") else None
         max_items_to_scan = int(item.get("max_items_to_scan", 24))
-        notify_once = bool(item.get("notify_once", True))
+        notify_once = parse_bool(item.get("notify_once"), default=True)
         search_watches.append(
             SearchWatchConfig(
                 search_url=search_url,
@@ -540,13 +550,17 @@ def check_products_once() -> None:
             )
 
             items_state = watch_state.get("items", {})
+            notified_items = dict(watch_state.get("notified_items", {}))
             updated_items_state: Dict[str, Any] = {}
             for match in matches:
                 item_key = normalize_key(match.url)
                 item_state = items_state.get(item_key, {})
+                already_notified = item_key in notified_items
 
                 alert_sent = False
-                if should_alert(
+                if watch.notify_once and already_notified:
+                    log(f"Arama bildirimi atlandi, daha once bildirildi: {match.title}")
+                elif should_alert(
                     item_state,
                     match.price,
                     watch.target_price,
@@ -568,6 +582,12 @@ def check_products_once() -> None:
                         timeout=request_timeout,
                     )
                     alert_sent = True
+                    notified_items[item_key] = {
+                        "title": match.title,
+                        "url": match.url,
+                        "price": str(match.price),
+                        "notified_at": utc_now(),
+                    }
                     log(f"Arama bildirimi gonderildi: {match.title}")
 
                 updated_items_state[item_key] = update_state_entry(
@@ -582,6 +602,7 @@ def check_products_once() -> None:
 
             state[watch_key] = {
                 "items": updated_items_state,
+                "notified_items": notified_items,
                 "last_match_count": len(matches),
                 "last_checked_at": utc_now(),
                 "last_error": None,
