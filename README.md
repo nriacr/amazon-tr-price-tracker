@@ -11,6 +11,7 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 - Sayfadan urun adi ve fiyat cikarmaya calisir
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller
+- Arama sonuc linklerini sabit urun linkine cevirerek ayni urunu tekrar tekrar bildirmez
 - Log satirlarini yerel saatle yazar
 - Durumu `/data/state.json` icinde saklar
 
@@ -68,10 +69,12 @@ search_watches:
 - `search_url`: Amazon'da filtreledigin arama veya kategori linki
 - `product_name`: Sonuclarda aranacak metin
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim
-- `name`: Configuration ekraninda liste satirlarini ayirt etmek icin zorunlu kisa ad
+- `name`: Istege bagli, bildirimde gorunecek kisa ad
 - `max_items_to_scan`: Ilk kac urun kartinin taranacagi
 
 Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
+
+Arama modu ayni urun icin tekrar bildirim gondermemek adina Amazon'un degisken arama linklerini sabit `https://www.amazon.com.tr/dp/ASIN` urun linkine cevirir. Ayni urun hedef fiyat altinda kalmaya devam ederse tekrar bildirim gelmez; fiyat daha da duserse yeniden bildirim gelir.
 
 ## Notlar
 
