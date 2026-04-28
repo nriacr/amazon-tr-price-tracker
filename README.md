@@ -62,6 +62,7 @@ search_watches:
     product_name: "ipad air 128"
     target_price: 22000
     max_items_to_scan: 24
+    notify_once: true
 ```
 
 `search_watches` modu su sekilde calisir:
@@ -71,10 +72,11 @@ search_watches:
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim
 - `name`: Istege bagli, bildirimde gorunecek kisa ad
 - `max_items_to_scan`: Ilk kac urun kartinin taranacagi
+- `notify_once`: `true` ise ayni urun bir kez bildirildikten sonra tekrar bildirilmez
 
 Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
 
-Arama modu ayni urun icin tekrar bildirim gondermemek adina Amazon'un degisken arama linklerini sabit `https://www.amazon.com.tr/dp/ASIN` urun linkine cevirir. Ayni urun hedef fiyat altinda kalmaya devam ederse tekrar bildirim gelmez; fiyat daha da duserse yeniden bildirim gelir.
+Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat altinda bir kez bildirildikten sonra, fiyat daha da dusse bile tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
 
 ## Notlar
 
