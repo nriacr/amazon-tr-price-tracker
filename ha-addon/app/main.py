@@ -79,6 +79,7 @@ class SearchWatchConfig:
     target_price: Decimal
     name: Optional[str] = None
     max_items_to_scan: int = 24
+    notify_once: bool = True
 
 
 @dataclass
@@ -164,6 +165,7 @@ def load_config() -> Tuple[
         target_price = parse_decimal(str(item["target_price"]))
         name = str(item["name"]).strip() if item.get("name") else None
         max_items_to_scan = int(item.get("max_items_to_scan", 24))
+        notify_once = bool(item.get("notify_once", True))
         search_watches.append(
             SearchWatchConfig(
                 search_url=search_url,
@@ -171,6 +173,7 @@ def load_config() -> Tuple[
                 target_price=target_price,
                 name=name,
                 max_items_to_scan=max_items_to_scan,
+                notify_once=notify_once,
             )
         )
 
@@ -414,13 +417,18 @@ def normalize_item_key(*parts: str) -> str:
 
 
 def should_alert(
-    state_entry: Dict[str, Any], current_price: Decimal, target_price: Decimal
+    state_entry: Dict[str, Any],
+    current_price: Decimal,
+    target_price: Decimal,
+    notify_once: bool = False,
 ) -> bool:
     last_alerted_price = state_entry.get("last_alerted_price")
     was_below = state_entry.get("was_below_target", False)
     is_below = current_price <= target_price
 
     if not is_below:
+        return False
+    if notify_once and last_alerted_price is not None:
         return False
     if not was_below:
         return True
@@ -516,7 +524,6 @@ def check_products_once() -> None:
     for watch in search_watches:
         watch_key = normalize_item_key(watch.search_url, watch.product_name)
         watch_state = state.get(watch_key, {})
-        matched_urls: List[str] = []
 
         try:
             results = fetch_search_results(
@@ -537,10 +544,14 @@ def check_products_once() -> None:
             for match in matches:
                 item_key = normalize_key(match.url)
                 item_state = items_state.get(item_key, {})
-                matched_urls.append(match.url)
 
                 alert_sent = False
-                if should_alert(item_state, match.price, watch.target_price):
+                if should_alert(
+                    item_state,
+                    match.price,
+                    watch.target_price,
+                    notify_once=watch.notify_once,
+                ):
                     message = (
                         f"{display_name}\n"
                         f"Eslesen urun: {match.title}\n"
