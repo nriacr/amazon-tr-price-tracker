@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -16,11 +17,21 @@ from bs4 import BeautifulSoup
 OPTIONS_PATH = Path("/data/options.json")
 STATE_PATH = Path("/data/state.json")
 PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
+AMAZON_BASE_URL = "https://www.amazon.com.tr"
+ASIN_URL_PATTERN = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})")
+RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
+RETRY_DELAYS_SECONDS = [10, 30, 75]
+SEARCH_PRE_DELAY_SECONDS = (5, 18)
+SEARCH_HTTP_COOLDOWN_SECONDS = 45 * 60
+USER_AGENTS = [
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+]
 DEFAULT_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
     "Accept": (
         "text/html,application/xhtml+xml,application/xml;q=0.9,"
         "image/avif,image/webp,image/apng,*/*;q=0.8"
@@ -36,8 +47,6 @@ DEFAULT_HEADERS = {
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
 }
-RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
-RETRY_DELAYS_SECONDS = [3, 8, 15]
 PRICE_META_SELECTORS = [
     ("meta", {"property": "product:price:amount"}, "content"),
     ("meta", {"itemprop": "price"}, "content"),
@@ -51,11 +60,7 @@ TEXT_SELECTORS = [
     ".a-price.aok-align-center .a-offscreen",
     ".a-price .a-offscreen",
 ]
-TITLE_SELECTORS = [
-    "#productTitle",
-    "#title",
-    "meta[property='og:title']",
-]
+TITLE_SELECTORS = ["#productTitle", "#title", "meta[property='og:title']"]
 SEARCH_CARD_SELECTORS = [
     "div[data-component-type='s-search-result']",
     "div[data-asin][data-component-type]",
@@ -74,8 +79,6 @@ CARD_TITLE_SELECTORS = [
     "[data-cy='title-recipe'] span",
     "a.a-link-normal span",
 ]
-AMAZON_BASE_URL = "https://www.amazon.com.tr"
-ASIN_URL_PATTERN = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})")
 
 
 @dataclass
@@ -104,6 +107,14 @@ class SearchResultItem:
 
 class TrackerError(Exception):
     pass
+
+
+class HttpStatusTrackerError(TrackerError):
+    def __init__(self, status_code: int, url: str) -> None:
+        self.status_code = status_code
+        super().__init__(
+            f"Amazon {status_code} dondurdu; bu kontrol atlandi, sonraki turda tekrar denenecek."
+        )
 
 
 def log(message: str) -> None:
@@ -158,9 +169,7 @@ def parse_bool(raw_value: Any, default: bool = False) -> bool:
     return bool(raw_value)
 
 
-def load_config() -> Tuple[
-    int, int, str, str, List[ProductConfig], List[SearchWatchConfig]
-]:
+def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchWatchConfig]]:
     payload = load_json(OPTIONS_PATH, {})
     interval_minutes = int(payload.get("interval_minutes", 30))
     request_timeout = int(payload.get("request_timeout_seconds", 20))
@@ -176,27 +185,24 @@ def load_config() -> Tuple[
 
     products: List[ProductConfig] = []
     for item in raw_products:
-        url = str(item["url"]).strip()
-        target_price = parse_decimal(str(item["target_price"]))
-        name = str(item["name"]).strip() if item.get("name") else None
-        products.append(ProductConfig(url=url, target_price=target_price, name=name))
+        products.append(
+            ProductConfig(
+                url=str(item["url"]).strip(),
+                target_price=parse_decimal(str(item["target_price"])),
+                name=str(item["name"]).strip() if item.get("name") else None,
+            )
+        )
 
     search_watches: List[SearchWatchConfig] = []
     for item in raw_search_watches:
-        search_url = str(item["search_url"]).strip()
-        product_name = str(item["product_name"]).strip()
-        target_price = parse_decimal(str(item["target_price"]))
-        name = str(item["name"]).strip() if item.get("name") else None
-        max_items_to_scan = int(item.get("max_items_to_scan", 24))
-        notify_once = parse_bool(item.get("notify_once"), default=True)
         search_watches.append(
             SearchWatchConfig(
-                search_url=search_url,
-                product_name=product_name,
-                target_price=target_price,
-                name=name,
-                max_items_to_scan=max_items_to_scan,
-                notify_once=notify_once,
+                search_url=str(item["search_url"]).strip(),
+                product_name=str(item["product_name"]).strip(),
+                target_price=parse_decimal(str(item["target_price"])),
+                name=str(item["name"]).strip() if item.get("name") else None,
+                max_items_to_scan=int(item.get("max_items_to_scan", 24)),
+                notify_once=parse_bool(item.get("notify_once"), default=True),
             )
         )
 
@@ -210,19 +216,24 @@ def load_config() -> Tuple[
     )
 
 
-def fetch_with_retries(
-    session: requests.Session, url: str, timeout: int
-) -> requests.Response:
-    last_response: Optional[requests.Response] = None
+def build_headers() -> Dict[str, str]:
+    headers = dict(DEFAULT_HEADERS)
+    headers["User-Agent"] = random.choice(USER_AGENTS)
+    headers["Referer"] = AMAZON_BASE_URL + "/"
+    return headers
+
+
+def fetch_with_retries(session: requests.Session, url: str, timeout: int) -> requests.Response:
+    last_status: Optional[int] = None
     attempts = len(RETRY_DELAYS_SECONDS) + 1
 
     for attempt in range(attempts):
-        response = session.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+        response = session.get(url, headers=build_headers(), timeout=timeout)
         if response.status_code not in RETRY_STATUS_CODES:
             response.raise_for_status()
             return response
 
-        last_response = response
+        last_status = response.status_code
         if attempt < len(RETRY_DELAYS_SECONDS):
             delay = RETRY_DELAYS_SECONDS[attempt]
             log(
@@ -231,10 +242,7 @@ def fetch_with_retries(
             )
             time.sleep(delay)
 
-    if last_response is None:
-        raise TrackerError("Amazon istegi basarisiz oldu.")
-    last_response.raise_for_status()
-    return last_response
+    raise HttpStatusTrackerError(last_status or 0, url)
 
 
 def extract_title(soup: BeautifulSoup) -> Optional[str]:
@@ -267,8 +275,7 @@ def extract_price(html: str) -> Decimal:
             if text:
                 return parse_decimal(text)
 
-    scripts = soup.find_all("script")
-    for script in scripts:
+    for script in soup.find_all("script"):
         text = script.string or script.get_text(" ", strip=True)
         if not text:
             continue
@@ -282,19 +289,14 @@ def extract_price(html: str) -> Decimal:
     raise TrackerError("Sayfadan fiyat bulunamadı.")
 
 
-def fetch_product(
-    session: requests.Session, url: str, timeout: int
-) -> Tuple[Optional[str], Decimal]:
+def fetch_product(session: requests.Session, url: str, timeout: int) -> Tuple[Optional[str], Decimal]:
     response = fetch_with_retries(session, url, timeout)
-
     html = response.text
     if "captcha" in html.lower() and "robot" in html.lower():
         raise TrackerError("Amazon bot koruması nedeniyle captcha sayfası döndü.")
 
     soup = BeautifulSoup(html, "html.parser")
-    title = extract_title(soup)
-    price = extract_price(html)
-    return title, price
+    return extract_title(soup), extract_price(html)
 
 
 def make_absolute_url(raw_url: str) -> str:
@@ -321,9 +323,15 @@ def canonical_product_url(raw_url: str, fallback_asin: Optional[str] = None) -> 
 
 
 def normalize_text(value: str) -> str:
-    value = value.casefold()
-    value = re.sub(r"\s+", " ", value)
-    return value.strip()
+    return re.sub(r"\s+", " ", value.casefold()).strip()
+
+
+def normalize_key(url: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9]+", "_", url).strip("_").lower()
+
+
+def normalize_item_key(*parts: str) -> str:
+    return normalize_key("_".join(parts))
 
 
 def extract_card_title(card: BeautifulSoup) -> Optional[str]:
@@ -360,17 +368,13 @@ def extract_card_price(card: BeautifulSoup) -> Optional[Decimal]:
     match = re.search(r"(\d{1,3}(?:\.\d{3})*,\d{2})\s*TL", full_text)
     if match:
         return parse_decimal(match.group(1))
-
     match = re.search(r"(\d+(?:,\d{2})?)\s*TL", full_text)
     if match:
         return parse_decimal(match.group(1))
-
     return None
 
 
-def extract_card_url(
-    card: BeautifulSoup, fallback_asin: Optional[str] = None
-) -> Optional[str]:
+def extract_card_url(card: BeautifulSoup, fallback_asin: Optional[str] = None) -> Optional[str]:
     link = (
         card.select_one("h2 a[href]")
         or card.select_one("a[href*='/dp/']")
@@ -406,9 +410,7 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
         title = extract_card_title(card)
         price = extract_card_price(card)
         url = extract_card_url(card, asin)
-        if not title or price is None or not url:
-            continue
-        if url in seen_urls:
+        if not title or price is None or not url or url in seen_urls:
             continue
 
         seen_urls.add(url)
@@ -420,8 +422,11 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
 def fetch_search_results(
     session: requests.Session, search_url: str, timeout: int, max_items_to_scan: int
 ) -> List[SearchResultItem]:
-    response = fetch_with_retries(session, search_url, timeout)
+    delay = random.randint(*SEARCH_PRE_DELAY_SECONDS)
+    log(f"Arama istegi oncesi {delay} saniye bekleniyor.")
+    time.sleep(delay)
 
+    response = fetch_with_retries(session, search_url, timeout)
     html = response.text
     if "captcha" in html.lower() and "robot" in html.lower():
         raise TrackerError("Amazon bot korumasi nedeniyle captcha sayfasi dondu.")
@@ -456,14 +461,6 @@ def send_pushover(
     response.raise_for_status()
 
 
-def normalize_key(url: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9]+", "_", url).strip("_").lower()
-
-
-def normalize_item_key(*parts: str) -> str:
-    return normalize_key("_".join(parts))
-
-
 def should_alert(
     state_entry: Dict[str, Any],
     current_price: Decimal,
@@ -478,9 +475,7 @@ def should_alert(
         return False
     if notify_once and last_alerted_price is not None:
         return False
-    if not was_below:
-        return True
-    if last_alerted_price is None:
+    if not was_below or last_alerted_price is None:
         return True
     try:
         return current_price < Decimal(str(last_alerted_price))
@@ -488,9 +483,7 @@ def should_alert(
         return True
 
 
-def filter_matching_results(
-    results: List[SearchResultItem], product_name: str
-) -> List[SearchResultItem]:
+def filter_matching_results(results: List[SearchResultItem], product_name: str) -> List[SearchResultItem]:
     needle = normalize_text(product_name)
     return [item for item in results if needle in normalize_text(item.title)]
 
@@ -509,6 +502,25 @@ def update_state_entry(
         updated["last_alerted_price"] = str(current_price)
         updated["last_alerted_at"] = utc_now()
     return updated
+
+
+def cooldown_remaining_seconds(watch_state: Dict[str, Any]) -> int:
+    status = watch_state.get("last_error_status")
+    if status not in {429, 503}:
+        return 0
+
+    last_checked_at = watch_state.get("last_checked_at")
+    if not last_checked_at:
+        return 0
+
+    try:
+        last_checked = datetime.fromisoformat(str(last_checked_at))
+    except ValueError:
+        return 0
+
+    elapsed = (datetime.now(timezone.utc) - last_checked).total_seconds()
+    remaining = SEARCH_HTTP_COOLDOWN_SECONDS - int(elapsed)
+    return max(0, remaining)
 
 
 def check_products_once() -> None:
@@ -563,15 +575,29 @@ def check_products_once() -> None:
                 alert_sent=alert_sent,
             )
             state[product_key]["last_error"] = None
+            state[product_key]["last_error_status"] = None
         except Exception as exc:  # noqa: BLE001
             log(f"Hata: {product.url} | {exc}")
             state[product_key] = dict(state_entry)
             state[product_key]["last_error"] = str(exc)
+            state[product_key]["last_error_status"] = getattr(exc, "status_code", None)
             state[product_key]["last_checked_at"] = utc_now()
 
     for watch in search_watches:
         watch_key = normalize_item_key(watch.search_url, watch.product_name)
         watch_state = state.get(watch_key, {})
+        display_name = watch.name or watch.product_name
+        remaining = cooldown_remaining_seconds(watch_state)
+        if remaining > 0:
+            minutes = max(1, round(remaining / 60))
+            log(
+                f"Arama gecici olarak atlandi: {display_name} | "
+                f"Amazon korumasi sonrasi {minutes} dk sonra yeniden denenecek."
+            )
+            skipped_state = dict(watch_state)
+            skipped_state["last_skipped_at"] = utc_now()
+            state[watch_key] = skipped_state
+            continue
 
         try:
             results = fetch_search_results(
@@ -581,7 +607,6 @@ def check_products_once() -> None:
                 max_items_to_scan=watch.max_items_to_scan,
             )
             matches = filter_matching_results(results, watch.product_name)
-            display_name = watch.name or watch.product_name
             log(
                 f"Arama kontrol edildi: {display_name} | eslesen_urun={len(matches)} | "
                 f"hedef={watch.target_price} TL"
@@ -589,7 +614,8 @@ def check_products_once() -> None:
 
             items_state = watch_state.get("items", {})
             notified_items = dict(watch_state.get("notified_items", {}))
-            updated_items_state: Dict[str, Any] = {}
+            updated_items_state: Dict[str, Any] = dict(items_state)
+
             for match in matches:
                 item_key = normalize_key(match.url)
                 item_state = items_state.get(item_key, {})
@@ -644,11 +670,13 @@ def check_products_once() -> None:
                 "last_match_count": len(matches),
                 "last_checked_at": utc_now(),
                 "last_error": None,
+                "last_error_status": None,
             }
         except Exception as exc:  # noqa: BLE001
             log(f"Hata: {watch.search_url} | {exc}")
             state[watch_key] = dict(watch_state)
             state[watch_key]["last_error"] = str(exc)
+            state[watch_key]["last_error_status"] = getattr(exc, "status_code", None)
             state[watch_key]["last_checked_at"] = utc_now()
 
     save_json(STATE_PATH, state)
