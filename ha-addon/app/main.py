@@ -225,7 +225,13 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
         )
 
     for item in raw_search_targets:
-        search_name = str(item["search_name"]).strip()
+        search_name = str(item.get("search_name") or "").strip()
+        if not search_name and len(pages) == 1:
+            search_name = next(iter(pages))
+        if not search_name:
+            raise TrackerError(
+                "Birden fazla search_pages varsa search_targets icinde search_name doldurulmali."
+            )
         if search_name not in pages:
             raise TrackerError(
                 f"search_targets icinde tanimlanan arama sayfasi bulunamadi: {search_name}"
