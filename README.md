@@ -2,23 +2,32 @@
 
 Bu proje, `amazon.com.tr` urun sayfalarini veya filtreli arama sonuc sayfalarini belirli araliklarla kontrol edip hedef fiyatin altina inildiginde `Pushover` uzerinden bildirim gonderen Home Assistant add-on'udur.
 
-Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da saklanabilir, Home Assistant'a add-on repository olarak eklenebilir veya local add-on olarak kurulabilir.
+Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da saklanir ve Home Assistant'a add-on repository olarak eklenerek guncellenebilir.
+
+## Guncel Surum
+
+```txt
+0.1.8
+```
+
+Bu surumde Amazon arama sayfalari `503` veya `429` dondurdugunde bot ayni sayfayi 15 dakikada bir zorlamaz. Birkaç kez daha nazik sekilde dener, yine kapaliysa o arama icin yaklasik 45 dakikalik soguma suresi uygular.
 
 ## Ne yapıyor?
 
-- Amazon Turkiye urun sayfasini duzenli araliklarla indirir
-- Filtreli arama sonuc sayfasindaki urun kartlarini tarayabilir
-- Sayfadan urun adi ve fiyat cikarmaya calisir
-- Fiyat hedef degerin altina inerse Pushover bildirimi yollar
-- Ayni fiyat icin gereksiz tekrar bildirimini engeller
-- Arama sonucunda bildirilen urunleri kalici olarak hatirlayip tekrar bildirmez
-- Amazon gecici 429/5xx hatalarinda kisa bekleyip tekrar dener
-- Log satirlarini yerel saatle yazar
-- Durumu `/data/state.json` icinde saklar
+- Amazon Turkiye urun sayfasini duzenli araliklarla indirir.
+- Filtreli arama sonuc sayfasindaki urun kartlarini tarayabilir.
+- Sayfadan urun adi ve fiyat cikarmaya calisir.
+- Fiyat hedef degerin altina inerse Pushover bildirimi yollar.
+- Ayni fiyat icin gereksiz tekrar bildirimini engeller.
+- Arama sonucunda bildirilen urunleri kalici olarak hatirlayip tekrar bildirmez.
+- Amazon gecici `429/5xx` hatalarinda bekleyip tekrar dener.
+- Arama sayfalarinda Amazon korumasi devam ederse 45 dakika soguma uygular.
+- Log satirlarini yerel saatle yazar.
+- Durumu `/data/state.json` icinde saklar.
 
 ## Klasörler
 
-- `ha-addon/`: Home Assistant add-on dosyaları
+- `ha-addon/`: Home Assistant add-on dosyalari
 - `YEDEKTEN_YENIDEN_KURULUM.md`: Yedekten yeniden kurulum rehberi
 - `repository.yaml`: Home Assistant add-on repository metadata dosyasi
 
@@ -54,13 +63,13 @@ products:
   - name: "iPhone 16"
     url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
     target_price: 24999.90
-  - name: "Kulaklık"
+  - name: "Kulaklik"
     url: "https://www.amazon.com.tr/dp/B0YYYYYYYY"
     target_price: 1299
 search_watches:
-  - name: "iPad arama takibi"
-    search_url: "https://www.amazon.com.tr/s?..."
-    product_name: "ipad air 128"
+  - name: "iPad ikinci el arama"
+    search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
+    product_name: "ipad"
     target_price: 22000
     max_items_to_scan: 24
     notify_once: true
@@ -68,23 +77,36 @@ search_watches:
 
 `search_watches` modu su sekilde calisir:
 
-- `search_url`: Amazon'da filtreledigin arama veya kategori linki
-- `product_name`: Sonuclarda aranacak metin
-- `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim
-- `name`: Istege bagli, bildirimde gorunecek kisa ad
-- `max_items_to_scan`: Ilk kac urun kartinin taranacagi
-- `notify_once`: `true` ise ayni urun bir kez bildirildikten sonra tekrar bildirilmez
+- `search_url`: Amazon'da filtreledigin arama veya kategori linki.
+- `product_name`: Sonuclarda aranacak metin.
+- `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim.
+- `name`: Configuration ekraninda ve bildirimlerde gorunecek kisa ad.
+- `max_items_to_scan`: Ilk kac urun kartinin taranacagi.
+- `notify_once`: `true` ise ayni urun bir kez bildirildikten sonra tekrar bildirilmez.
 
 Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
 
 Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat altinda bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her 15 dakikada tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
 
+## 503 ve Amazon Koruması
+
+Amazon bazen ozellikle arama sayfalarinda `503 Service Unavailable` dondurur. Bu genelde link formatinin bozuk oldugu anlamina gelmez; Amazon o anda otomatik istegi kabul etmiyor demektir.
+
+Botun davranisi:
+
+- Once arama isteginden once rastgele kisa bir bekleme yapar.
+- Amazon `503/429/5xx` dondururse `10`, `30`, `75` saniye bekleyerek tekrar dener.
+- Yine basarisiz olursa o arama kaydini yaklasik 45 dakika sogumaya alir.
+- Soguma sirasinda logda `Arama gecici olarak atlandi` satiri gorunur.
+- Soguma bitince otomatik yeniden dener.
+
+Bu davranis Amazon'u daha az zorlamak ve ayni hatanin logu surekli doldurmasini engellemek icindir.
+
 ## Notlar
 
-- Amazon zaman zaman bot korumasi, bolgesel farkliliklar veya HTML degisiklikleri uygulayabilir. Bu durumda secicileri guncellemek gerekebilir.
+- Amazon zaman zaman bot korumasi, bolgesel farkliliklar veya HTML degisiklikleri uygulayabilir.
 - Cok sik sorgu atmak yerine `15-60 dakika` araligi mantiklidir.
-- Amazon `503` veya `429` dondururse bot kisa beklemelerle tekrar dener; Amazon uzun sure engellerse sonraki kontrol araliginda tekrar denenir.
-- Arama sonucu takibinde urun karti HTML'i degisirse secicilerde guncelleme gerekebilir.
+- Amazon uzun sure `503` dondururse linki tarayicida acip calisip calismadigini kontrol et.
 - Pushover anahtarlari ve gercek takip listesi GitHub'a konmamalidir.
 
 ## Yedekten Yeniden Kurulum
@@ -103,7 +125,7 @@ Yedek stratejisi:
 
 ## Yerel Test
 
-Add-on içindeki Python dosyasını sözdizimi açısından test etmek için:
+Add-on icindeki Python dosyasini sozdizimi acisindan test etmek icin:
 
 ```bash
 python3 -m py_compile ha-addon/app/main.py
