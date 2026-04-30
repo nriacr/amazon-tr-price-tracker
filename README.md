@@ -7,10 +7,16 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.2.3
+0.2.4
 ```
 
-Bu surumde `search_targets` alan sirasi daha okunur hale getirildi: once hedefin kendi `name` alani, sonra gerekirse baglanacagi `search_name` gelir.
+Bu surumde her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
+
+Ornek:
+
+```txt
+Sonraki kontrol: 2026-04-30 21:15:00
+```
 
 ## Ne yapıyor?
 
