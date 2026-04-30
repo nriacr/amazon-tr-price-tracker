@@ -7,15 +7,16 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.1.9
+0.2.0
 ```
 
-Bu surumde arama takiplerinde hata olursa Pushover uzerinden ayrica haber verilir. Ayni arama ve ayni hata surekli tekrar ederse telefonunu bildirimle doldurmamak icin ayni hata yaklasik 6 saatte bir bildirilir.
+Bu surumde `search_watches` yapisi bastan kurgulandi. Artik tek bir arama linki altinda birden fazla urun hedefi takip edilebilir. Eski `search_watches` kayitlari bu surumde yeniden yeni formata gore girilmelidir.
 
 ## Ne yapıyor?
 
 - Amazon Turkiye urun sayfasini duzenli araliklarla indirir.
 - Filtreli arama sonuc sayfasindaki urun kartlarini tarayabilir.
+- Tek bir arama sayfasinda birden fazla urun hedefi ve hedef fiyat kontrol edebilir.
 - Sayfadan urun adi ve fiyat cikarmaya calisir.
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar.
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller.
@@ -51,8 +52,6 @@ Adimlar:
 7. `Configuration` sekmesine kendi ayarlarini yapistir.
 8. `Save` ve sonra `Start` yap.
 
-Not: Repo private ise Home Assistant repo URL'sini dogrudan okuyamayabilir. Bu durumda `Code > Download ZIP` ile indirip `ha-addon` klasorunu Home Assistant'ta `/addons/local/amazon_tr_price_tracker` konumuna koymak gerekir. Detayli anlatim icin `YEDEKTEN_YENIDEN_KURULUM.md` dosyasina bak.
-
 ## Örnek Yapılandırma
 
 ```yaml
@@ -64,30 +63,40 @@ products:
   - name: "iPhone 16"
     url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
     target_price: 24999.90
-  - name: "Kulaklik"
-    url: "https://www.amazon.com.tr/dp/B0YYYYYYYY"
-    target_price: 1299
 search_watches:
   - name: "iPad ikinci el arama"
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
-    product_name: "ipad"
-    target_price: 22000
-    max_items_to_scan: 24
+    max_items_to_scan: 40
     notify_once: true
+    targets:
+      - name: "iPad Air 13 M4"
+        product_name: "ipad air 13"
+        target_price: 35000
+      - name: "iPad Pro 13 M5 256"
+        product_name: "ipad pro 13 256"
+        target_price: 60000
+      - name: "iPad mini"
+        product_name: "ipad mini"
+        target_price: 20000
 ```
 
 `search_watches` modu su sekilde calisir:
 
+- `name`: Bu arama sayfasinin kisa adi. Configuration ekraninda bu isimle ayirt edilir.
 - `search_url`: Amazon'da filtreledigin arama veya kategori linki.
-- `product_name`: Sonuclarda aranacak metin.
+- `max_items_to_scan`: O arama sayfasinda ilk kac urun kartinin taranacagi.
+- `notify_once`: `true` ise ayni hedef urun bir kez bildirildikten sonra tekrar bildirilmez.
+- `targets`: Ayni arama linki icinde takip edilecek urun hedefleri.
+
+`targets` icindeki alanlar:
+
+- `name`: Bu hedefin kisa adi. Bildirimlerde gorunur.
+- `product_name`: Amazon sonuc basliginda aranacak metin.
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim.
-- `name`: Configuration ekraninda ve bildirimlerde gorunecek kisa ad.
-- `max_items_to_scan`: Ilk kac urun kartinin taranacagi.
-- `notify_once`: `true` ise ayni urun bir kez bildirildikten sonra tekrar bildirilmez.
 
-Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
+Bu yeni yapida ayni Amazon arama linkini her urun icin tekrar yazmana gerek yoktur. Bir kere arama linkini girersin, altina istedigin kadar urun hedefi eklersin.
 
-Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat altinda bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her 15 dakikada tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
+Arama modu varsayilan olarak `notify_once: true` calisir. Ayni hedef altinda ayni urun bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her kontrolde tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
 
 ## Arama Hata Bildirimleri
 
@@ -96,7 +105,7 @@ Arama takiplerinden biri hata verirse bot Pushover'a `Amazon arama hatasi` basli
 Bildirimde sunlar bulunur:
 
 - Hangi arama kaydinda hata oldugu
-- `product_name` filtresi
+- O arama altindaki hedeflerin adlari
 - Hata mesaji
 - Sorunlu arama linki
 
