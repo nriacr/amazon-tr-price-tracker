@@ -21,10 +21,23 @@ DEFAULT_HEADERS = {
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     ),
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+        "image/avif,image/webp,image/apng,*/*;q=0.8"
+    ),
     "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
 }
+RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
+RETRY_DELAYS_SECONDS = [3, 8, 15]
 PRICE_META_SELECTORS = [
     ("meta", {"property": "product:price:amount"}, "content"),
     ("meta", {"itemprop": "price"}, "content"),
@@ -197,6 +210,33 @@ def load_config() -> Tuple[
     )
 
 
+def fetch_with_retries(
+    session: requests.Session, url: str, timeout: int
+) -> requests.Response:
+    last_response: Optional[requests.Response] = None
+    attempts = len(RETRY_DELAYS_SECONDS) + 1
+
+    for attempt in range(attempts):
+        response = session.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+        if response.status_code not in RETRY_STATUS_CODES:
+            response.raise_for_status()
+            return response
+
+        last_response = response
+        if attempt < len(RETRY_DELAYS_SECONDS):
+            delay = RETRY_DELAYS_SECONDS[attempt]
+            log(
+                f"Amazon gecici hata verdi ({response.status_code}); "
+                f"{delay} saniye sonra tekrar denenecek."
+            )
+            time.sleep(delay)
+
+    if last_response is None:
+        raise TrackerError("Amazon istegi basarisiz oldu.")
+    last_response.raise_for_status()
+    return last_response
+
+
 def extract_title(soup: BeautifulSoup) -> Optional[str]:
     for selector in TITLE_SELECTORS:
         element = soup.select_one(selector)
@@ -245,8 +285,7 @@ def extract_price(html: str) -> Decimal:
 def fetch_product(
     session: requests.Session, url: str, timeout: int
 ) -> Tuple[Optional[str], Decimal]:
-    response = session.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
-    response.raise_for_status()
+    response = fetch_with_retries(session, url, timeout)
 
     html = response.text
     if "captcha" in html.lower() and "robot" in html.lower():
@@ -381,8 +420,7 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
 def fetch_search_results(
     session: requests.Session, search_url: str, timeout: int, max_items_to_scan: int
 ) -> List[SearchResultItem]:
-    response = session.get(search_url, headers=DEFAULT_HEADERS, timeout=timeout)
-    response.raise_for_status()
+    response = fetch_with_retries(session, search_url, timeout)
 
     html = response.text
     if "captcha" in html.lower() and "robot" in html.lower():
