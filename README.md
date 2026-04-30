@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.1.8
+0.1.9
 ```
 
-Bu surumde Amazon arama sayfalari `503` veya `429` dondurdugunde bot ayni sayfayi 15 dakikada bir zorlamaz. Birkaç kez daha nazik sekilde dener, yine kapaliysa o arama icin yaklasik 45 dakikalik soguma suresi uygular.
+Bu surumde arama takiplerinde hata olursa Pushover uzerinden ayrica haber verilir. Ayni arama ve ayni hata surekli tekrar ederse telefonunu bildirimle doldurmamak icin ayni hata yaklasik 6 saatte bir bildirilir.
 
 ## Ne yapıyor?
 
@@ -20,6 +20,7 @@ Bu surumde Amazon arama sayfalari `503` veya `429` dondurdugunde bot ayni sayfay
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar.
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller.
 - Arama sonucunda bildirilen urunleri kalici olarak hatirlayip tekrar bildirmez.
+- Arama takibinde hata olursa Pushover ile hangi aramada hata oldugunu bildirir.
 - Amazon gecici `429/5xx` hatalarinda bekleyip tekrar dener.
 - Arama sayfalarinda Amazon korumasi devam ederse 45 dakika soguma uygular.
 - Log satirlarini yerel saatle yazar.
@@ -87,6 +88,19 @@ search_watches:
 Home Assistant Configuration ekraninda liste satirlarini daha kolay ayirt etmek icin `name` alani zorunludur ve her urun/arama kaydinda en uste yazilmalidir.
 
 Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat altinda bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her 15 dakikada tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
+
+## Arama Hata Bildirimleri
+
+Arama takiplerinden biri hata verirse bot Pushover'a `Amazon arama hatasi` baslikli ayri bir bildirim yollar.
+
+Bildirimde sunlar bulunur:
+
+- Hangi arama kaydinda hata oldugu
+- `product_name` filtresi
+- Hata mesaji
+- Sorunlu arama linki
+
+Ayni arama ve ayni hata tekrar ederse bildirim yaklasik 6 saatte bir gonderilir. Hata degisirse yeni hata tekrar bildirilir. Bu sayede link bozuldugunda veya Amazon sayfa yapisi degistiginde haberin olur, ama telefonun her kontrol turunda ayni hatayla dolmaz.
 
 ## 503 ve Amazon Koruması
 
