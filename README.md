@@ -12,6 +12,7 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller
 - Arama sonucunda bildirilen urunleri kalici olarak hatirlayip tekrar bildirmez
+- Amazon gecici 429/5xx hatalarinda kisa bekleyip tekrar dener
 - Log satirlarini yerel saatle yazar
 - Durumu `/data/state.json` icinde saklar
 
@@ -82,6 +83,7 @@ Arama modu varsayilan olarak `notify_once: true` calisir. Ayni urun hedef fiyat 
 
 - Amazon zaman zaman bot korumasi, bolgesel farkliliklar veya HTML degisiklikleri uygulayabilir. Bu durumda secicileri guncellemek gerekebilir.
 - Cok sik sorgu atmak yerine `15-60 dakika` araligi mantiklidir.
+- Amazon `503` veya `429` dondururse bot kisa beklemelerle tekrar dener; Amazon uzun sure engellerse sonraki kontrol araliginda tekrar denenir.
 - Arama sonucu takibinde urun karti HTML'i degisirse secicilerde guncelleme gerekebilir.
 - Pushover anahtarlari ve gercek takip listesi GitHub'a konmamalidir.
 
