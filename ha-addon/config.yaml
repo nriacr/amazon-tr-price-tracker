@@ -1,5 +1,5 @@
 name: Amazon TR Price Tracker
-version: "0.2.1"
+version: "0.2.2"
 slug: amazon_tr_price_tracker
 description: amazon.com.tr fiyatlarını izler ve Pushover bildirimi yollar.
 url: https://example.com/amazon-tr-price-tracker
@@ -33,7 +33,7 @@ schema:
       max_items_to_scan: "int(1,100)?"
       notify_once: "bool?"
   search_targets:
-    - search_name: "str"
+    - search_name: "str?"
       name: "str"
       product_name: "str"
       target_price: "float"
