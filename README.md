@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.2.0
+0.2.1
 ```
 
-Bu surumde `search_watches` yapisi bastan kurgulandi. Artik tek bir arama linki altinda birden fazla urun hedefi takip edilebilir. Eski `search_watches` kayitlari bu surumde yeniden yeni formata gore girilmelidir.
+Bu surumde arama takibi Home Assistant UI ile daha rahat kaydedilebilmesi icin iki ayri bolume ayrildi: `search_pages` ve `search_targets`. Boylece ic ice `Add` kullanmadan tek arama linki altinda birden fazla hedef urun takip edilebilir.
 
 ## Ne yapıyor?
 
@@ -27,12 +27,6 @@ Bu surumde `search_watches` yapisi bastan kurgulandi. Artik tek bir arama linki 
 - Log satirlarini yerel saatle yazar.
 - Durumu `/data/state.json` icinde saklar.
 
-## Klasörler
-
-- `ha-addon/`: Home Assistant add-on dosyalari
-- `YEDEKTEN_YENIDEN_KURULUM.md`: Yedekten yeniden kurulum rehberi
-- `repository.yaml`: Home Assistant add-on repository metadata dosyasi
-
 ## GitHub Uzerinden Kolay Kurulum
 
 Home Assistant'in add-on repository alanina su repo adresi eklenir:
@@ -48,9 +42,9 @@ Adimlar:
 3. Repo adresini ekle.
 4. Add-on Store ekranini yenile.
 5. `Amazon TR Price Tracker` add-on'unu bul.
-6. `Install` yap.
-7. `Configuration` sekmesine kendi ayarlarini yapistir.
-8. `Save` ve sonra `Start` yap.
+6. `Install` veya `Update` yap.
+7. `Configuration` sekmesine kendi ayarlarini gir.
+8. `Save` ve sonra `Start` veya `Restart` yap.
 
 ## Örnek Yapılandırma
 
@@ -63,40 +57,58 @@ products:
   - name: "iPhone 16"
     url: "https://www.amazon.com.tr/dp/B0XXXXXXXX"
     target_price: 24999.90
-search_watches:
-  - name: "iPad ikinci el arama"
+search_pages:
+  - name: "ipad ikinci el"
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
     max_items_to_scan: 40
     notify_once: true
-    targets:
-      - name: "iPad Air 13 M4"
-        product_name: "ipad air 13"
-        target_price: 35000
-      - name: "iPad Pro 13 M5 256"
-        product_name: "ipad pro 13 256"
-        target_price: 60000
-      - name: "iPad mini"
-        product_name: "ipad mini"
-        target_price: 20000
+search_targets:
+  - search_name: "ipad ikinci el"
+    name: "iPad Air 13 M4"
+    product_name: "ipad air 13"
+    target_price: 35000
+  - search_name: "ipad ikinci el"
+    name: "iPad Pro 13 256"
+    product_name: "ipad pro 13 256"
+    target_price: 60000
+  - search_name: "ipad ikinci el"
+    name: "iPad mini"
+    product_name: "ipad mini"
+    target_price: 20000
 ```
 
-`search_watches` modu su sekilde calisir:
+## UI Üzerinden Nasıl Girilir?
 
-- `name`: Bu arama sayfasinin kisa adi. Configuration ekraninda bu isimle ayirt edilir.
+1. `search_pages` bolumunde `Add` de.
+2. `name` alanina bu arama sayfasinin kisa adini yaz. Ornek: `ipad ikinci el`.
+3. `search_url` alanina Amazon arama linkini yapistir.
+4. `max_items_to_scan` icin ornek `40` yaz.
+5. `notify_once` acik kalsin.
+6. `search_targets` bolumunde her urun hedefi icin `Add` de.
+7. `search_name` alanina yukarida yazdigin arama sayfasi adini aynen yaz. Ornek: `ipad ikinci el`.
+8. `name` alanina hedefin kisa adini yaz. Ornek: `iPad Air 13 M4`.
+9. `product_name` alanina Amazon sonuc basliginda aranacak metni yaz. Ornek: `ipad air 13`.
+10. `target_price` alanina hedef fiyati yaz.
+
+`search_name` degeri, `search_pages` icindeki `name` ile birebir ayni olmalidir. Bu baglanti sayesinde ayni URL'yi her hedef urun icin tekrar yazmana gerek kalmaz.
+
+## Alanlar
+
+`search_pages` alanlari:
+
+- `name`: Bu arama sayfasinin kisa adi.
 - `search_url`: Amazon'da filtreledigin arama veya kategori linki.
 - `max_items_to_scan`: O arama sayfasinda ilk kac urun kartinin taranacagi.
 - `notify_once`: `true` ise ayni hedef urun bir kez bildirildikten sonra tekrar bildirilmez.
-- `targets`: Ayni arama linki icinde takip edilecek urun hedefleri.
 
-`targets` icindeki alanlar:
+`search_targets` alanlari:
 
+- `search_name`: Hangi arama sayfasinda aranacagi. `search_pages.name` ile ayni olmalidir.
 - `name`: Bu hedefin kisa adi. Bildirimlerde gorunur.
 - `product_name`: Amazon sonuc basliginda aranacak metin.
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim.
 
-Bu yeni yapida ayni Amazon arama linkini her urun icin tekrar yazmana gerek yoktur. Bir kere arama linkini girersin, altina istedigin kadar urun hedefi eklersin.
-
-Arama modu varsayilan olarak `notify_once: true` calisir. Ayni hedef altinda ayni urun bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her kontrolde tekrar bildirim gonderilmez. Fiyat daha da dustugunde de bildirim almak istersen ilgili arama kaydinda `notify_once: false` yapabilirsin.
+Arama modu varsayilan olarak `notify_once: true` calisir. Ayni hedef altinda ayni urun bir kez bildirildikten sonra kalici `notified_items` listesine eklenir; indirim devam ettigi surece her kontrolde tekrar bildirim gonderilmez.
 
 ## Arama Hata Bildirimleri
 
@@ -109,7 +121,7 @@ Bildirimde sunlar bulunur:
 - Hata mesaji
 - Sorunlu arama linki
 
-Ayni arama ve ayni hata tekrar ederse bildirim yaklasik 6 saatte bir gonderilir. Hata degisirse yeni hata tekrar bildirilir. Bu sayede link bozuldugunda veya Amazon sayfa yapisi degistiginde haberin olur, ama telefonun her kontrol turunda ayni hatayla dolmaz.
+Ayni arama ve ayni hata tekrar ederse bildirim yaklasik 6 saatte bir gonderilir. Hata degisirse yeni hata tekrar bildirilir.
 
 ## 503 ve Amazon Koruması
 
@@ -123,13 +135,10 @@ Botun davranisi:
 - Soguma sirasinda logda `Arama gecici olarak atlandi` satiri gorunur.
 - Soguma bitince otomatik yeniden dener.
 
-Bu davranis Amazon'u daha az zorlamak ve ayni hatanin logu surekli doldurmasini engellemek icindir.
-
 ## Notlar
 
 - Amazon zaman zaman bot korumasi, bolgesel farkliliklar veya HTML degisiklikleri uygulayabilir.
 - Cok sik sorgu atmak yerine `15-60 dakika` araligi mantiklidir.
-- Amazon uzun sure `503` dondururse linki tarayicida acip calisip calismadigini kontrol et.
 - Pushover anahtarlari ve gercek takip listesi GitHub'a konmamalidir.
 
 ## Yedekten Yeniden Kurulum
@@ -138,18 +147,4 @@ Yeniden kurulum icin ana rehber:
 
 ```txt
 YEDEKTEN_YENIDEN_KURULUM.md
-```
-
-Yedek stratejisi:
-
-- Kodlar GitHub reposunda tutulur.
-- Pushover anahtarlari ve gercek takip listesi ayri, guvenli bir `configuration-backup.yaml` dosyasinda saklanir.
-- Yeni Home Assistant kurulumunda once add-on GitHub'dan kurulur, sonra configuration yedegi yapistirilir.
-
-## Yerel Test
-
-Add-on icindeki Python dosyasini sozdizimi acisindan test etmek icin:
-
-```bash
-python3 -m py_compile ha-addon/app/main.py
 ```
