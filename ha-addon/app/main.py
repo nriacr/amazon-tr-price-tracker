@@ -5,7 +5,7 @@ import re
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -127,6 +127,10 @@ class HttpStatusTrackerError(TrackerError):
 def log(message: str) -> None:
     now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{now}] {message}", flush=True)
+
+
+def format_local_datetime(value: datetime) -> str:
+    return value.astimezone().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def utc_now() -> str:
@@ -814,6 +818,8 @@ def main() -> int:
     log(f"Servis basladi. Kontrol araligi: {interval_minutes} dakika")
     while True:
         check_products_once()
+        next_check = datetime.now().astimezone() + timedelta(minutes=interval_minutes)
+        log(f"Sonraki kontrol: {format_local_datetime(next_check)}")
         time.sleep(interval_minutes * 60)
 
 
