@@ -90,11 +90,17 @@ class ProductConfig:
 
 
 @dataclass
-class SearchWatchConfig:
-    search_url: str
+class SearchTargetConfig:
+    name: str
     product_name: str
     target_price: Decimal
-    name: Optional[str] = None
+
+
+@dataclass
+class SearchWatchConfig:
+    name: str
+    search_url: str
+    targets: List[SearchTargetConfig]
     max_items_to_scan: int = 24
     notify_once: bool = True
 
@@ -208,12 +214,26 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
 
     search_watches: List[SearchWatchConfig] = []
     for item in raw_search_watches:
+        targets: List[SearchTargetConfig] = []
+        for target in item.get("targets", []):
+            target_name = str(target["name"]).strip()
+            product_name = str(target.get("product_name") or target_name).strip()
+            targets.append(
+                SearchTargetConfig(
+                    name=target_name,
+                    product_name=product_name,
+                    target_price=parse_decimal(str(target["target_price"])),
+                )
+            )
+
+        if not targets:
+            raise TrackerError("Her search_watches kaydinda en az bir targets kaydi olmali.")
+
         search_watches.append(
             SearchWatchConfig(
+                name=str(item["name"]).strip(),
                 search_url=str(item["search_url"]).strip(),
-                product_name=str(item["product_name"]).strip(),
-                target_price=parse_decimal(str(item["target_price"])),
-                name=str(item["name"]).strip() if item.get("name") else None,
+                targets=targets,
                 max_items_to_scan=int(item.get("max_items_to_scan", 24)),
                 notify_once=parse_bool(item.get("notify_once"), default=True),
             )
@@ -616,14 +636,13 @@ def check_products_once() -> None:
             state[product_key]["last_checked_at"] = utc_now()
 
     for watch in search_watches:
-        watch_key = normalize_item_key(watch.search_url, watch.product_name)
+        watch_key = normalize_item_key(watch.name, watch.search_url)
         watch_state = state.get(watch_key, {})
-        display_name = watch.name or watch.product_name
         remaining = cooldown_remaining_seconds(watch_state)
         if remaining > 0:
             minutes = max(1, round(remaining / 60))
             log(
-                f"Arama gecici olarak atlandi: {display_name} | "
+                f"Arama gecici olarak atlandi: {watch.name} | "
                 f"Amazon korumasi sonrasi {minutes} dk sonra yeniden denenecek."
             )
             skipped_state = dict(watch_state)
@@ -638,68 +657,86 @@ def check_products_once() -> None:
                 timeout=request_timeout,
                 max_items_to_scan=watch.max_items_to_scan,
             )
-            matches = filter_matching_results(results, watch.product_name)
             log(
-                f"Arama kontrol edildi: {display_name} | eslesen_urun={len(matches)} | "
-                f"hedef={watch.target_price} TL"
+                f"Arama sayfasi kontrol edildi: {watch.name} | "
+                f"okunan_urun={len(results)} | hedef_sayisi={len(watch.targets)}"
             )
 
-            items_state = watch_state.get("items", {})
+            targets_state = dict(watch_state.get("targets", {}))
             notified_items = dict(watch_state.get("notified_items", {}))
-            updated_items_state: Dict[str, Any] = dict(items_state)
 
-            for match in matches:
-                item_key = normalize_key(match.url)
-                item_state = items_state.get(item_key, {})
-                already_notified = item_key in notified_items
+            for target in watch.targets:
+                target_key = normalize_key(target.name)
+                target_state = targets_state.get(target_key, {})
+                items_state = target_state.get("items", {})
+                updated_items_state: Dict[str, Any] = dict(items_state)
+                matches = filter_matching_results(results, target.product_name)
 
-                alert_sent = False
-                if watch.notify_once and already_notified:
-                    log(f"Arama bildirimi atlandi, daha once bildirildi: {match.title}")
-                elif should_alert(
-                    item_state,
-                    match.price,
-                    watch.target_price,
-                    notify_once=watch.notify_once,
-                ):
-                    message = (
-                        f"{display_name}\n"
-                        f"Eslesen urun: {match.title}\n"
-                        f"Guncel fiyat: {match.price} TL\n"
-                        f"Hedef fiyat: {watch.target_price} TL"
-                    )
-                    send_pushover(
-                        session=session,
-                        user_key=user_key,
-                        api_token=api_token,
-                        title="Amazon arama alarmi",
-                        message=message,
-                        url=match.url,
-                        timeout=request_timeout,
-                    )
-                    alert_sent = True
-                    notified_items[item_key] = {
-                        "title": match.title,
-                        "url": match.url,
-                        "price": str(match.price),
-                        "notified_at": utc_now(),
-                    }
-                    log(f"Arama bildirimi gonderildi: {match.title}")
-
-                updated_items_state[item_key] = update_state_entry(
-                    state_entry=item_state,
-                    current_price=match.price,
-                    target_price=watch.target_price,
-                    alert_sent=alert_sent,
+                log(
+                    f"Arama hedefi kontrol edildi: {watch.name} / {target.name} | "
+                    f"eslesen_urun={len(matches)} | hedef={target.target_price} TL"
                 )
-                updated_items_state[item_key]["title"] = match.title
-                updated_items_state[item_key]["url"] = match.url
-                updated_items_state[item_key]["last_error"] = None
+
+                for match in matches:
+                    item_key = normalize_key(match.url)
+                    item_state = items_state.get(item_key, {})
+                    notification_key = normalize_item_key(target_key, match.url)
+                    already_notified = notification_key in notified_items
+
+                    alert_sent = False
+                    if watch.notify_once and already_notified:
+                        log(f"Arama bildirimi atlandi, daha once bildirildi: {match.title}")
+                    elif should_alert(
+                        item_state,
+                        match.price,
+                        target.target_price,
+                        notify_once=watch.notify_once,
+                    ):
+                        message = (
+                            f"Arama: {watch.name}\n"
+                            f"Hedef: {target.name}\n"
+                            f"Eslesen urun: {match.title}\n"
+                            f"Guncel fiyat: {match.price} TL\n"
+                            f"Hedef fiyat: {target.target_price} TL"
+                        )
+                        send_pushover(
+                            session=session,
+                            user_key=user_key,
+                            api_token=api_token,
+                            title="Amazon arama alarmi",
+                            message=message,
+                            url=match.url,
+                            timeout=request_timeout,
+                        )
+                        alert_sent = True
+                        notified_items[notification_key] = {
+                            "target": target.name,
+                            "title": match.title,
+                            "url": match.url,
+                            "price": str(match.price),
+                            "notified_at": utc_now(),
+                        }
+                        log(f"Arama bildirimi gonderildi: {target.name} | {match.title}")
+
+                    updated_items_state[item_key] = update_state_entry(
+                        state_entry=item_state,
+                        current_price=match.price,
+                        target_price=target.target_price,
+                        alert_sent=alert_sent,
+                    )
+                    updated_items_state[item_key]["title"] = match.title
+                    updated_items_state[item_key]["url"] = match.url
+                    updated_items_state[item_key]["last_error"] = None
+
+                targets_state[target_key] = {
+                    "items": updated_items_state,
+                    "last_match_count": len(matches),
+                    "last_checked_at": utc_now(),
+                }
 
             state[watch_key] = {
-                "items": updated_items_state,
+                "targets": targets_state,
                 "notified_items": notified_items,
-                "last_match_count": len(matches),
                 "last_checked_at": utc_now(),
                 "last_error": None,
                 "last_error_status": None,
@@ -716,9 +753,10 @@ def check_products_once() -> None:
             updated_watch_state = dict(watch_state)
             if should_send_error_notification(updated_watch_state, error_message, error_status):
                 try:
+                    target_names = ", ".join(target.name for target in watch.targets)
                     message = (
-                        f"Arama: {display_name}\n"
-                        f"Urun adi filtresi: {watch.product_name}\n"
+                        f"Arama: {watch.name}\n"
+                        f"Hedefler: {target_names}\n"
                         f"Hata: {error_message}\n"
                         f"Kontrol etmen gerekebilir: link gecersiz olabilir, Amazon korumasi olabilir veya sayfa yapisi degismis olabilir."
                     )
@@ -734,9 +772,9 @@ def check_products_once() -> None:
                     updated_watch_state = update_error_notification_state(
                         updated_watch_state, error_message, error_status
                     )
-                    log(f"Arama hata bildirimi gonderildi: {display_name}")
+                    log(f"Arama hata bildirimi gonderildi: {watch.name}")
                 except Exception as notify_exc:  # noqa: BLE001
-                    log(f"Arama hata bildirimi gonderilemedi: {display_name} | {notify_exc}")
+                    log(f"Arama hata bildirimi gonderilemedi: {watch.name} | {notify_exc}")
 
             updated_watch_state["last_error"] = error_message
             updated_watch_state["last_error_status"] = error_status
