@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.2.2
+0.2.3
 ```
 
-Bu surumde `search_targets.search_name` alani istege bagli hale getirildi. Tek bir `search_pages` kaydin varsa `search_name` bos birakilabilir; birden fazla arama sayfasi varsa hedefin hangi sayfaya ait oldugunu anlamak icin doldurulmalidir.
+Bu surumde `search_targets` alan sirasi daha okunur hale getirildi: once hedefin kendi `name` alani, sonra gerekirse baglanacagi `search_name` gelir.
 
 ## Ne yapıyor?
 
@@ -61,12 +61,12 @@ search_pages:
     max_items_to_scan: 40
     notify_once: true
 search_targets:
-  - search_name: "ipad ikinci el"
-    name: "iPad Air 13 M4"
+  - name: "iPad Air 13 M4"
+    search_name: "ipad ikinci el"
     product_name: "ipad air 13"
     target_price: 35000
-  - search_name: "mac ikinci el"
-    name: "MacBook Air M4"
+  - name: "MacBook Air M4"
+    search_name: "mac ikinci el"
     product_name: "macbook air m4"
     target_price: 45000
 ```
@@ -79,9 +79,9 @@ search_targets:
 4. `max_items_to_scan` icin ornek `40` yaz.
 5. `notify_once` acik kalsin.
 6. `search_targets` bolumunde her urun hedefi icin `Add` de.
-7. Sadece tek arama sayfan varsa `search_name` alanini bos birakabilirsin.
-8. Birden fazla arama sayfan varsa `search_name` alanina ilgili `search_pages.name` degerini aynen yaz.
-9. `name` alanina hedefin kisa adini yaz. Ornek: `iPad Air 13 M4`.
+7. `name` alanina hedefin kisa adini yaz. Ornek: `iPad Air 13 M4`.
+8. Sadece tek arama sayfan varsa `search_name` alanini bos birakabilirsin.
+9. Birden fazla arama sayfan varsa `search_name` alanina ilgili `search_pages.name` degerini aynen yaz.
 10. `product_name` alanina Amazon sonuc basliginda aranacak metni yaz. Ornek: `ipad air 13`.
 11. `target_price` alanina hedef fiyati yaz.
 
@@ -96,8 +96,8 @@ search_targets:
 
 `search_targets` alanlari:
 
-- `search_name`: Hangi arama sayfasinda aranacagi. Tek arama sayfasi varsa bos olabilir.
 - `name`: Bu hedefin kisa adi. Bildirimlerde gorunur.
+- `search_name`: Hangi arama sayfasinda aranacagi. Tek arama sayfasi varsa bos olabilir.
 - `product_name`: Amazon sonuc basliginda aranacak metin.
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim.
 
