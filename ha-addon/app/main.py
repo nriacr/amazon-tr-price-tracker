@@ -23,6 +23,7 @@ RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
 RETRY_DELAYS_SECONDS = [10, 30, 75]
 SEARCH_PRE_DELAY_SECONDS = (5, 18)
 SEARCH_HTTP_COOLDOWN_SECONDS = 45 * 60
+SEARCH_ERROR_NOTIFICATION_COOLDOWN_SECONDS = 6 * 60 * 60
 USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -124,6 +125,18 @@ def log(message: str) -> None:
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def parse_iso_datetime(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -483,6 +496,30 @@ def should_alert(
         return True
 
 
+def should_send_error_notification(
+    state_entry: Dict[str, Any], error_message: str, error_status: Optional[int]
+) -> bool:
+    signature = f"{error_status or 'error'}:{error_message}"
+    if state_entry.get("last_error_notification_signature") != signature:
+        return True
+
+    last_notified = parse_iso_datetime(state_entry.get("last_error_notified_at"))
+    if not last_notified:
+        return True
+
+    elapsed = (datetime.now(timezone.utc) - last_notified).total_seconds()
+    return elapsed >= SEARCH_ERROR_NOTIFICATION_COOLDOWN_SECONDS
+
+
+def update_error_notification_state(
+    state_entry: Dict[str, Any], error_message: str, error_status: Optional[int]
+) -> Dict[str, Any]:
+    updated = dict(state_entry)
+    updated["last_error_notified_at"] = utc_now()
+    updated["last_error_notification_signature"] = f"{error_status or 'error'}:{error_message}"
+    return updated
+
+
 def filter_matching_results(results: List[SearchResultItem], product_name: str) -> List[SearchResultItem]:
     needle = normalize_text(product_name)
     return [item for item in results if needle in normalize_text(item.title)]
@@ -509,13 +546,8 @@ def cooldown_remaining_seconds(watch_state: Dict[str, Any]) -> int:
     if status not in {429, 503}:
         return 0
 
-    last_checked_at = watch_state.get("last_checked_at")
-    if not last_checked_at:
-        return 0
-
-    try:
-        last_checked = datetime.fromisoformat(str(last_checked_at))
-    except ValueError:
+    last_checked = parse_iso_datetime(watch_state.get("last_checked_at"))
+    if not last_checked:
         return 0
 
     elapsed = (datetime.now(timezone.utc) - last_checked).total_seconds()
@@ -671,13 +703,45 @@ def check_products_once() -> None:
                 "last_checked_at": utc_now(),
                 "last_error": None,
                 "last_error_status": None,
+                "last_error_notified_at": watch_state.get("last_error_notified_at"),
+                "last_error_notification_signature": watch_state.get(
+                    "last_error_notification_signature"
+                ),
             }
         except Exception as exc:  # noqa: BLE001
-            log(f"Hata: {watch.search_url} | {exc}")
-            state[watch_key] = dict(watch_state)
-            state[watch_key]["last_error"] = str(exc)
-            state[watch_key]["last_error_status"] = getattr(exc, "status_code", None)
-            state[watch_key]["last_checked_at"] = utc_now()
+            error_message = str(exc)
+            error_status = getattr(exc, "status_code", None)
+            log(f"Hata: {watch.search_url} | {error_message}")
+
+            updated_watch_state = dict(watch_state)
+            if should_send_error_notification(updated_watch_state, error_message, error_status):
+                try:
+                    message = (
+                        f"Arama: {display_name}\n"
+                        f"Urun adi filtresi: {watch.product_name}\n"
+                        f"Hata: {error_message}\n"
+                        f"Kontrol etmen gerekebilir: link gecersiz olabilir, Amazon korumasi olabilir veya sayfa yapisi degismis olabilir."
+                    )
+                    send_pushover(
+                        session=session,
+                        user_key=user_key,
+                        api_token=api_token,
+                        title="Amazon arama hatasi",
+                        message=message[:900],
+                        url=watch.search_url,
+                        timeout=request_timeout,
+                    )
+                    updated_watch_state = update_error_notification_state(
+                        updated_watch_state, error_message, error_status
+                    )
+                    log(f"Arama hata bildirimi gonderildi: {display_name}")
+                except Exception as notify_exc:  # noqa: BLE001
+                    log(f"Arama hata bildirimi gonderilemedi: {display_name} | {notify_exc}")
+
+            updated_watch_state["last_error"] = error_message
+            updated_watch_state["last_error_status"] = error_status
+            updated_watch_state["last_checked_at"] = utc_now()
+            state[watch_key] = updated_watch_state
 
     save_json(STATE_PATH, state)
 
