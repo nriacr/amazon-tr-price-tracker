@@ -195,10 +195,11 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
     pushover_user_key = str(payload.get("pushover_user_key", "")).strip()
     pushover_api_token = str(payload.get("pushover_api_token", "")).strip()
     raw_products = payload.get("products", [])
-    raw_search_watches = payload.get("search_watches", [])
+    raw_search_pages = payload.get("search_pages", [])
+    raw_search_targets = payload.get("search_targets", [])
 
-    if not raw_products and not raw_search_watches:
-        raise TrackerError("En az bir products veya search_watches kaydi tanimlanmali.")
+    if not raw_products and not raw_search_pages:
+        raise TrackerError("En az bir products veya search_pages kaydi tanimlanmali.")
     if not pushover_user_key or not pushover_api_token:
         raise TrackerError("Pushover anahtarları zorunlu.")
 
@@ -212,32 +213,36 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
             )
         )
 
-    search_watches: List[SearchWatchConfig] = []
-    for item in raw_search_watches:
-        targets: List[SearchTargetConfig] = []
-        for target in item.get("targets", []):
-            target_name = str(target["name"]).strip()
-            product_name = str(target.get("product_name") or target_name).strip()
-            targets.append(
-                SearchTargetConfig(
-                    name=target_name,
-                    product_name=product_name,
-                    target_price=parse_decimal(str(target["target_price"])),
-                )
+    pages: Dict[str, SearchWatchConfig] = {}
+    for item in raw_search_pages:
+        page_name = str(item["name"]).strip()
+        pages[page_name] = SearchWatchConfig(
+            name=page_name,
+            search_url=str(item["search_url"]).strip(),
+            targets=[],
+            max_items_to_scan=int(item.get("max_items_to_scan", 24)),
+            notify_once=parse_bool(item.get("notify_once"), default=True),
+        )
+
+    for item in raw_search_targets:
+        search_name = str(item["search_name"]).strip()
+        if search_name not in pages:
+            raise TrackerError(
+                f"search_targets icinde tanimlanan arama sayfasi bulunamadi: {search_name}"
             )
-
-        if not targets:
-            raise TrackerError("Her search_watches kaydinda en az bir targets kaydi olmali.")
-
-        search_watches.append(
-            SearchWatchConfig(
-                name=str(item["name"]).strip(),
-                search_url=str(item["search_url"]).strip(),
-                targets=targets,
-                max_items_to_scan=int(item.get("max_items_to_scan", 24)),
-                notify_once=parse_bool(item.get("notify_once"), default=True),
+        target_name = str(item["name"]).strip()
+        product_name = str(item.get("product_name") or target_name).strip()
+        pages[search_name].targets.append(
+            SearchTargetConfig(
+                name=target_name,
+                product_name=product_name,
+                target_price=parse_decimal(str(item["target_price"])),
             )
         )
+
+    search_watches = list(pages.values())
+    if raw_search_pages and not any(watch.targets for watch in search_watches):
+        raise TrackerError("En az bir search_targets kaydi tanimlanmali.")
 
     return (
         interval_minutes,
@@ -636,6 +641,10 @@ def check_products_once() -> None:
             state[product_key]["last_checked_at"] = utc_now()
 
     for watch in search_watches:
+        if not watch.targets:
+            log(f"Arama atlandi: {watch.name} | Bu arama sayfasina hedef urun eklenmemis.")
+            continue
+
         watch_key = normalize_item_key(watch.name, watch.search_url)
         watch_state = state.get(watch_key, {})
         remaining = cooldown_remaining_seconds(watch_state)
