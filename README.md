@@ -7,10 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.0.0
+1.0.1
 ```
 
-Bu surum, stabil ve gunluk kullanima uygun ilk ana surum olarak isaretlendi. Dogrudan urun linki takibi, filtreli arama sayfasi takibi, tekrar bildirim engelleme, arama hata bildirimi, Amazon gecici hata bekleme/tekrar deneme ve yerel saatli loglar dahildir.
+Bu surumde Home Assistant add-on gorselleri yenilendi: `icon.png` 128x128, `logo.png` 250x100 olcusunu korur; logoda Amazon yazisi, smile isareti ve bildirim cani bulunur.
+
+`1.0.0` surumu stabil ve gunluk kullanima uygun ilk ana surum olarak isaretlendi. Dogrudan urun linki takibi, filtreli arama sayfasi takibi, tekrar bildirim engelleme, arama hata bildirimi, Amazon gecici hata bekleme/tekrar deneme ve yerel saatli loglar dahildir.
 
 Her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
 
