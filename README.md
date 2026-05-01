@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.2.5
+0.2.6
 ```
 
-Bu surumde Home Assistant add-on listesinde gorunmesi icin uygulamaya ozel `icon.png` ve `logo.png` eklendi.
+Bu surumde Home Assistant'ta daha duzgun gorunmesi icin `icon.png` ve `logo.png` olculeri yenilendi. Logo uzerindeki yazi kaldirildi; boylece kucuk ekranda kirpilma ve Turkce karakter sorunu olusmaz.
 
 Bir onceki surumden beri her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
 
