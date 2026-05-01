@@ -7,12 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.2.6
+1.0.0
 ```
 
-Bu surumde Home Assistant'ta daha duzgun gorunmesi icin `icon.png` ve `logo.png` olculeri yenilendi. Logo uzerindeki yazi kaldirildi; boylece kucuk ekranda kirpilma ve Turkce karakter sorunu olusmaz.
+Bu surum, stabil ve gunluk kullanima uygun ilk ana surum olarak isaretlendi. Dogrudan urun linki takibi, filtreli arama sayfasi takibi, tekrar bildirim engelleme, arama hata bildirimi, Amazon gecici hata bekleme/tekrar deneme ve yerel saatli loglar dahildir.
 
-Bir onceki surumden beri her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
+Her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
 
 Ornek:
 
