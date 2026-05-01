@@ -7,10 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-0.2.4
+0.2.5
 ```
 
-Bu surumde her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
+Bu surumde Home Assistant add-on listesinde gorunmesi icin uygulamaya ozel `icon.png` ve `logo.png` eklendi.
+
+Bir onceki surumden beri her kontrol turu bittikten sonra loga bir sonraki kontrol zamani yazilir.
 
 Ornek:
 
