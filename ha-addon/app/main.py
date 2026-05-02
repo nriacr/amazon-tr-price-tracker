@@ -4,6 +4,7 @@ import random
 import re
 import sys
 import time
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -73,6 +74,12 @@ CARD_PRICE_SELECTORS = [
     "span.a-price > span.a-offscreen",
     ".a-price-whole",
 ]
+SECONDARY_OFFER_SELECTORS = [
+    "[data-cy='secondary-offer-recipe']",
+    "[data-cy='secondary-offer']",
+    ".puis-secondary-offer",
+    ".puis-see-details-content",
+]
 CARD_TITLE_SELECTORS = [
     "h2 a span",
     "h2 span",
@@ -80,6 +87,10 @@ CARD_TITLE_SELECTORS = [
     "[data-cy='title-recipe'] span",
     "a.a-link-normal span",
 ]
+SECONDARY_OFFER_PRICE_PATTERN = re.compile(
+    r"diger\s+satin\s+alma\s+secenekleri\s+"
+    r"(?P<price>\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:,\d{2})?)\s*tl"
+)
 
 
 @dataclass
@@ -374,6 +385,13 @@ def normalize_text(value: str) -> str:
     return re.sub(r"\s+", " ", value.casefold()).strip()
 
 
+def normalize_offer_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value.casefold())
+    normalized = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    normalized = normalized.replace("ı", "i")
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
 def normalize_key(url: str) -> str:
     return re.sub(r"[^a-zA-Z0-9]+", "_", url).strip("_").lower()
 
@@ -400,7 +418,36 @@ def extract_card_title(card: BeautifulSoup) -> Optional[str]:
     return None
 
 
+def extract_price_after_secondary_offer_text(text: str) -> Optional[Decimal]:
+    normalized = normalize_offer_text(text)
+    if "diger satin alma secenekleri" not in normalized or "ikinci el" not in normalized:
+        return None
+
+    match = SECONDARY_OFFER_PRICE_PATTERN.search(normalized)
+    if not match:
+        return None
+
+    try:
+        return parse_decimal(match.group("price"))
+    except TrackerError:
+        return None
+
+
+def extract_secondary_offer_price(card: BeautifulSoup) -> Optional[Decimal]:
+    for selector in SECONDARY_OFFER_SELECTORS:
+        for element in card.select(selector):
+            price = extract_price_after_secondary_offer_text(element.get_text(" ", strip=True))
+            if price is not None:
+                return price
+
+    return extract_price_after_secondary_offer_text(card.get_text(" ", strip=True))
+
+
 def extract_card_price(card: BeautifulSoup) -> Optional[Decimal]:
+    secondary_offer_price = extract_secondary_offer_price(card)
+    if secondary_offer_price is not None:
+        return secondary_offer_price
+
     for selector in CARD_PRICE_SELECTORS:
         element = card.select_one(selector)
         if not element:
