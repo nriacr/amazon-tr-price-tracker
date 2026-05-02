@@ -7,10 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.0.2
+1.0.3
 ```
 
-Bu surumde arama sonuc kartlarinda `Diger satin alma secenekleri` altinda gorunen `Ikinci El` teklif fiyati okunur. Bir urun kartinda hem sifir urun fiyati hem de ikinci el teklif fiyati varsa bot ikinci el teklif fiyatini oncelikli kullanir.
+Bu surumde her `search_pages` kaydina istege bagli `search_url_2` alani eklendi. Boylece ayni arama hedefleri icin hem Amazon Depo linki hem de Amazon'un sol menuden secilen Ikinci El filtreli linki birlikte taranabilir. Bot iki linkten gelen ayni urunu tekillestirir.
+
+`1.0.2` surumunde arama sonuc kartlarinda `Diger satin alma secenekleri` altinda gorunen `Ikinci El` teklif fiyati okunur. Bir urun kartinda hem sifir urun fiyati hem de ikinci el teklif fiyati varsa bot ikinci el teklif fiyatini oncelikli kullanir.
 
 `1.0.1` surumunde Home Assistant add-on gorselleri yenilendi: `icon.png` 128x128, `logo.png` 250x100 olcusunu korur; logoda Amazon yazisi, smile isareti ve bildirim cani bulunur.
 
@@ -28,6 +30,7 @@ Sonraki kontrol: 2026-04-30 21:15:00
 
 - Amazon Turkiye urun sayfasini duzenli araliklarla indirir.
 - Filtreli arama sonuc sayfasindaki urun kartlarini tarayabilir.
+- Ayni search page altinda iki farkli Amazon arama linkini birlikte kontrol edebilir.
 - Arama sonucunda `Diger satin alma secenekleri` altindaki ikinci el teklif fiyatini okuyabilir.
 - Tek bir arama sayfasinda birden fazla urun hedefi ve hedef fiyat kontrol edebilir.
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar.
@@ -39,7 +42,7 @@ Sonraki kontrol: 2026-04-30 21:15:00
 
 ## Örnek Yapılandırma
 
-Tek arama sayfasi kullaniyorsan `search_name` bos kalabilir:
+Tek arama sayfasi kullaniyorsan `search_name` bos kalabilir. `search_url_2` istege baglidir:
 
 ```yaml
 interval_minutes: 30
@@ -50,6 +53,7 @@ products: []
 search_pages:
   - name: "ipad ikinci el"
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
+    search_url_2: "https://www.amazon.com.tr/s?k=ipad&rh=p_n_condition-type%3A13818537031&dc&rnid=13818535031"
     max_items_to_scan: 40
     notify_once: true
 search_targets:
@@ -67,6 +71,7 @@ Birden fazla arama sayfasi kullaniyorsan `search_name` yaz:
 search_pages:
   - name: "ipad ikinci el"
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
+    search_url_2: "https://www.amazon.com.tr/s?k=ipad&rh=p_n_condition-type%3A13818537031&dc&rnid=13818535031"
     max_items_to_scan: 40
     notify_once: true
   - name: "mac ikinci el"
@@ -88,23 +93,25 @@ search_targets:
 
 1. `search_pages` bolumunde `Add` de.
 2. `name` alanina bu arama sayfasinin kisa adini yaz. Ornek: `ipad ikinci el`.
-3. `search_url` alanina Amazon arama linkini yapistir.
-4. `max_items_to_scan` icin ornek `40` yaz.
-5. `notify_once` acik kalsin.
-6. `search_targets` bolumunde her urun hedefi icin `Add` de.
-7. `name` alanina hedefin kisa adini yaz. Ornek: `iPad Air 13 M4`.
-8. Sadece tek arama sayfan varsa `search_name` alanini bos birakabilirsin.
-9. Birden fazla arama sayfan varsa `search_name` alanina ilgili `search_pages.name` degerini aynen yaz.
-10. `product_name` alanina Amazon sonuc basliginda aranacak metni yaz. Ornek: `ipad air 13`.
-11. `target_price` alanina hedef fiyati yaz.
+3. `search_url` alanina Amazon Depo veya ana arama linkini yapistir.
+4. `search_url_2` alanina istersen ikinci arama linkini yapistir. Ornek: Amazon sol menuden `Ikinci El` secince olusan link.
+5. `max_items_to_scan` icin ornek `40` yaz. Bu deger her link icin ayri ayri uygulanir.
+6. `notify_once` acik kalsin.
+7. `search_targets` bolumunde her urun hedefi icin `Add` de.
+8. `name` alanina hedefin kisa adini yaz. Ornek: `iPad Air 13 M4`.
+9. Sadece tek arama sayfan varsa `search_name` alanini bos birakabilirsin.
+10. Birden fazla arama sayfan varsa `search_name` alanina ilgili `search_pages.name` degerini aynen yaz.
+11. `product_name` alanina Amazon sonuc basliginda aranacak metni yaz. Ornek: `ipad air 13`.
+12. `target_price` alanina hedef fiyati yaz.
 
 ## Alanlar
 
 `search_pages` alanlari:
 
 - `name`: Bu arama sayfasinin kisa adi.
-- `search_url`: Amazon'da filtreledigin arama veya kategori linki.
-- `max_items_to_scan`: O arama sayfasinda ilk kac urun kartinin taranacagi.
+- `search_url`: Amazon'da filtreledigin ana arama veya kategori linki.
+- `search_url_2`: Istege bagli ikinci arama linki. Ayni hedefler bu linkte de aranir.
+- `max_items_to_scan`: Her arama linkinde ilk kac urun kartinin taranacagi.
 - `notify_once`: `true` ise ayni hedef urun bir kez bildirildikten sonra tekrar bildirilmez.
 
 `search_targets` alanlari:
@@ -117,6 +124,8 @@ search_targets:
 ## Arama Hata Bildirimleri
 
 Arama takiplerinden biri hata verirse bot Pushover'a `Amazon arama hatasi` baslikli ayri bir bildirim yollar. Ayni arama ve ayni hata tekrar ederse bildirim yaklasik 6 saatte bir gonderilir.
+
+Bir `search_pages` kaydinda iki link varsa ve linklerden biri gecici hata verirken digeri okunabiliyorsa bot calismaya devam eder, basarili linkten gelen urunleri kontrol eder ve loga kismi hata yazar.
 
 ## 503 ve Amazon Koruması
 
