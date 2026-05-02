@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.1.0
+1.1.1
 ```
 
-Bu surumde `notify_once: true` davranisi 24 saatlik tekrar susturma olarak guncellendi. Ayni urun ayni veya daha yuksek fiyatta kalirsa 24 saat icinde tekrar bildirim gelmez; 24 saat dolduktan sonra hala hedef fiyat altindaysa tekrar hatirlatabilir. Fiyat daha once bildirilen fiyattan daha dusuge inerse 24 saat beklemeden yeniden bildirim gelir.
+Bu surumde config ekranindaki `notify_once` alani `notify_once_in_24H` olarak yeniden adlandirildi. Davranis aynidir: ayni urun ayni veya daha yuksek fiyatta kalirsa 24 saat icinde tekrar bildirim gelmez; 24 saat dolduktan sonra hala hedef fiyat altindaysa tekrar hatirlatabilir. Fiyat daha once bildirilen fiyattan daha dusuge inerse 24 saat beklemeden yeniden bildirim gelir.
 
 `1.0.4` surumunde arama sonuc sayfasinin altindaki onerilen/alternatif urun bolumleri tarama disi birakildi. Bot su basliklardan herhangi birini gordugu noktadan sonraki urun kartlarini okumaz: `Yardima mi ihtiyaciniz var?`, `Baktiginiz Urunlere Gore Belirlenen Urunler`, `Tarama gecmisinizdeki urunleri goruntuleyen musteriler ayrica sunlari da goruntuledi:`.
 
@@ -61,7 +61,7 @@ search_pages:
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
     search_url_2: "https://www.amazon.com.tr/s?k=ipad&rh=p_n_condition-type%3A13818537031&dc&rnid=13818535031"
     max_items_to_scan: 40
-    notify_once: true
+    notify_once_in_24H: true
 search_targets:
   - name: "iPad Air 13 M4"
     product_name: "ipad air 13"
@@ -79,11 +79,11 @@ search_pages:
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
     search_url_2: "https://www.amazon.com.tr/s?k=ipad&rh=p_n_condition-type%3A13818537031&dc&rnid=13818535031"
     max_items_to_scan: 40
-    notify_once: true
+    notify_once_in_24H: true
   - name: "mac ikinci el"
     search_url: "https://www.amazon.com.tr/s?k=macbook&i=warehouse-deals"
     max_items_to_scan: 40
-    notify_once: true
+    notify_once_in_24H: true
 search_targets:
   - name: "iPad Air 13 M4"
     search_name: "ipad ikinci el"
@@ -102,7 +102,7 @@ search_targets:
 3. `search_url` alanina Amazon Depo veya ana arama linkini yapistir.
 4. `search_url_2` alanina istersen ikinci arama linkini yapistir. Ornek: Amazon sol menuden `Ikinci El` secince olusan link.
 5. `max_items_to_scan` icin ornek `40` yaz. Bu deger her link icin ayri ayri uygulanir.
-6. `notify_once` acik kalsin.
+6. `notify_once_in_24H` acik kalsin.
 7. `search_targets` bolumunde her urun hedefi icin `Add` de.
 8. `name` alanina hedefin kisa adini yaz. Ornek: `iPad Air 13 M4`.
 9. Sadece tek arama sayfan varsa `search_name` alanini bos birakabilirsin.
@@ -118,7 +118,7 @@ search_targets:
 - `search_url`: Amazon'da filtreledigin ana arama veya kategori linki.
 - `search_url_2`: Istege bagli ikinci arama linki. Ayni hedefler bu linkte de aranir.
 - `max_items_to_scan`: Her arama linkinde ilk kac urun kartinin taranacagi.
-- `notify_once`: `true` ise ayni hedef urun ayni veya daha yuksek fiyatta 24 saat icinde tekrar bildirilmez; daha dusuk fiyat yakalanirsa sure beklemeden bildirilir.
+- `notify_once_in_24H`: `true` ise ayni hedef urun ayni veya daha yuksek fiyatta 24 saat icinde tekrar bildirilmez; daha dusuk fiyat yakalanirsa sure beklemeden bildirilir.
 
 `search_targets` alanlari:
 
