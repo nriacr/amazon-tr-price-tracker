@@ -7,10 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.0.1
+1.0.2
 ```
 
-Bu surumde Home Assistant add-on gorselleri yenilendi: `icon.png` 128x128, `logo.png` 250x100 olcusunu korur; logoda Amazon yazisi, smile isareti ve bildirim cani bulunur.
+Bu surumde arama sonuc kartlarinda `Diger satin alma secenekleri` altinda gorunen `Ikinci El` teklif fiyati okunur. Bir urun kartinda hem sifir urun fiyati hem de ikinci el teklif fiyati varsa bot ikinci el teklif fiyatini oncelikli kullanir.
+
+`1.0.1` surumunde Home Assistant add-on gorselleri yenilendi: `icon.png` 128x128, `logo.png` 250x100 olcusunu korur; logoda Amazon yazisi, smile isareti ve bildirim cani bulunur.
 
 `1.0.0` surumu stabil ve gunluk kullanima uygun ilk ana surum olarak isaretlendi. Dogrudan urun linki takibi, filtreli arama sayfasi takibi, tekrar bildirim engelleme, arama hata bildirimi, Amazon gecici hata bekleme/tekrar deneme ve yerel saatli loglar dahildir.
 
@@ -26,6 +28,7 @@ Sonraki kontrol: 2026-04-30 21:15:00
 
 - Amazon Turkiye urun sayfasini duzenli araliklarla indirir.
 - Filtreli arama sonuc sayfasindaki urun kartlarini tarayabilir.
+- Arama sonucunda `Diger satin alma secenekleri` altindaki ikinci el teklif fiyatini okuyabilir.
 - Tek bir arama sayfasinda birden fazla urun hedefi ve hedef fiyat kontrol edebilir.
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar.
 - Ayni fiyat icin gereksiz tekrar bildirimini engeller.
