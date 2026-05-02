@@ -132,7 +132,7 @@ class SearchResultItem:
 
 @dataclass
 class SearchPriceLogRow:
-    product_name: str
+    product_title: str
     price: Decimal
     target_price: Decimal
 
@@ -513,9 +513,9 @@ def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
         log("Ozet: eslesen=0")
         return
 
-    rows.sort(key=lambda row: (normalize_text(row.product_name), row.price))
+    rows.sort(key=lambda row: (normalize_text(row.product_title), row.price))
     no_width = 3
-    product_width = 36
+    product_width = 40
     price_width = 10
 
     header = (
@@ -540,7 +540,7 @@ def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
         difference = row.price - row.target_price
         log(
             f"{index:>{no_width}} | "
-            f"{log_cell(row.product_name, product_width)} | "
+            f"{log_cell(row.product_title, product_width)} | "
             f"{format_tl(row.price):>{price_width}} | "
             f"{format_tl(row.target_price):>{price_width}} | "
             f"{format_signed_tl(difference):>{price_width}}"
@@ -931,7 +931,7 @@ def check_products_once() -> None:
                 for match in matches:
                     search_price_log_rows.append(
                         SearchPriceLogRow(
-                            product_name=target.product_name,
+                            product_title=match.title,
                             price=match.price,
                             target_price=target.target_price,
                         )
