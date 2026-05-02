@@ -7,10 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.0.4
+1.0.5
 ```
 
-Bu surumde arama sonuc sayfasinin altindaki onerilen/alternatif urun bolumleri tarama disi birakildi. Bot su basliklardan herhangi birini gordugu noktadan sonraki urun kartlarini okumaz: `Yardima mi ihtiyaciniz var?`, `Baktiginiz Urunlere Gore Belirlenen Urunler`, `Tarama gecmisinizdeki urunleri goruntuleyen musteriler ayrica sunlari da goruntuledi:`.
+Bu surumde `notify_once: true` davranisi 24 saatlik tekrar susturma olarak guncellendi. Ayni urun ayni veya daha yuksek fiyatta kalirsa 24 saat icinde tekrar bildirim gelmez; 24 saat dolduktan sonra hala hedef fiyat altindaysa tekrar hatirlatabilir. Fiyat daha once bildirilen fiyattan daha dusuge inerse 24 saat beklemeden yeniden bildirim gelir.
+
+`1.0.4` surumunde arama sonuc sayfasinin altindaki onerilen/alternatif urun bolumleri tarama disi birakildi. Bot su basliklardan herhangi birini gordugu noktadan sonraki urun kartlarini okumaz: `Yardima mi ihtiyaciniz var?`, `Baktiginiz Urunlere Gore Belirlenen Urunler`, `Tarama gecmisinizdeki urunleri goruntuleyen musteriler ayrica sunlari da goruntuledi:`.
 
 `1.0.3` surumunde her `search_pages` kaydina istege bagli `search_url_2` alani eklendi. Boylece ayni arama hedefleri icin hem Amazon Depo linki hem de Amazon'un sol menuden secilen Ikinci El filtreli linki birlikte taranabilir. Bot iki linkten gelen ayni urunu tekillestirir.
 
@@ -37,7 +39,8 @@ Sonraki kontrol: 2026-04-30 21:15:00
 - Arama sonucunda `Diger satin alma secenekleri` altindaki ikinci el teklif fiyatini okuyabilir.
 - Tek bir arama sayfasinda birden fazla urun hedefi ve hedef fiyat kontrol edebilir.
 - Fiyat hedef degerin altina inerse Pushover bildirimi yollar.
-- Ayni fiyat icin gereksiz tekrar bildirimini engeller.
+- Ayni urun ayni fiyatta kalirsa 24 saat icinde tekrar bildirim gondermez.
+- Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
 - Arama takibinde hata olursa Pushover ile hangi aramada hata oldugunu bildirir.
 - Amazon gecici `429/5xx` hatalarinda bekleyip tekrar dener.
 - Arama sayfalarinda Amazon korumasi devam ederse 45 dakika soguma uygular.
@@ -115,7 +118,7 @@ search_targets:
 - `search_url`: Amazon'da filtreledigin ana arama veya kategori linki.
 - `search_url_2`: Istege bagli ikinci arama linki. Ayni hedefler bu linkte de aranir.
 - `max_items_to_scan`: Her arama linkinde ilk kac urun kartinin taranacagi.
-- `notify_once`: `true` ise ayni hedef urun bir kez bildirildikten sonra tekrar bildirilmez.
+- `notify_once`: `true` ise ayni hedef urun ayni veya daha yuksek fiyatta 24 saat icinde tekrar bildirilmez; daha dusuk fiyat yakalanirsa sure beklemeden bildirilir.
 
 `search_targets` alanlari:
 
