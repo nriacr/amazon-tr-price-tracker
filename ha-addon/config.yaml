@@ -1,5 +1,5 @@
 name: Amazon TR Price Tracker
-version: "1.1.1"
+version: "1.2.0"
 slug: amazon_tr_price_tracker
 description: amazon.com.tr fiyatlarını izler ve Pushover bildirimi yollar.
 url: https://example.com/amazon-tr-price-tracker
