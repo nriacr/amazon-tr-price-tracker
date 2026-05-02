@@ -619,7 +619,10 @@ def should_alert(
     if not is_below:
         return False
     if notify_once and last_alerted_price is not None:
-        return False
+        try:
+            return current_price < Decimal(str(last_alerted_price))
+        except InvalidOperation:
+            return True
     if not was_below or last_alerted_price is None:
         return True
     try:
@@ -818,14 +821,19 @@ def check_products_once() -> None:
 
                 for match in matches:
                     item_key = normalize_key(match.url)
-                    item_state = items_state.get(item_key, {})
+                    item_state = dict(items_state.get(item_key, {}))
                     notification_key = normalize_item_key(target_key, match.url)
-                    already_notified = notification_key in notified_items
+                    notified_item = notified_items.get(notification_key, {})
+
+                    if (
+                        watch.notify_once
+                        and "last_alerted_price" not in item_state
+                        and notified_item.get("price") is not None
+                    ):
+                        item_state["last_alerted_price"] = notified_item.get("price")
 
                     alert_sent = False
-                    if watch.notify_once and already_notified:
-                        log(f"Arama bildirimi atlandi, daha once bildirildi: {match.title}")
-                    elif should_alert(
+                    if should_alert(
                         item_state,
                         match.price,
                         target.target_price,
@@ -856,6 +864,11 @@ def check_products_once() -> None:
                             "notified_at": utc_now(),
                         }
                         log(f"Arama bildirimi gonderildi: {target.name} | {match.title}")
+                    elif watch.notify_once and notified_item:
+                        log(
+                            f"Arama bildirimi atlandi, fiyat daha dusuk degil: {match.title} | "
+                            f"fiyat={match.price} TL"
+                        )
 
                     updated_items_state[item_key] = update_state_entry(
                         state_entry=item_state,
