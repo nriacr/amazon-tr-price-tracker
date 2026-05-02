@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.1
+1.2.2
 ```
 
-Bu surum arama loglarini daha okunabilir hale getirir. Arama hedeflerinde eslesen ama hedef fiyat ustunde kalan urunler, her kontrol turunda fiyat tablosu olarak loglara yazilir. Hedef fiyat ve altindaki urunler bu tabloya eklenmez; onlar mevcut Pushover bildirim akisiyle gonderilmeye devam eder.
+Bu surum arama log tablosunu tur sonuna tasir. Her arama dongusundeki tum search page ve search target kontrolleri bittikten sonra tek bir fiyat ozeti basilir. Tabloda uzun Amazon urun basligi yerine senin girdigin `product_name` keyword'u kullanilir.
 
 ## Ne Yapar?
 
@@ -22,24 +22,25 @@ Bu surum arama loglarini daha okunabilir hale getirir. Arama hedeflerinde eslese
 - Arama sonuc sayfasinin altindaki onerilen/alternatif urun bloklarini yok sayar.
 - Ayni urun ayni fiyatta kalirsa 24 saat icinde tekrar bildirim gondermez.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
-- Hedef fiyat ustunde kalan eslesmeleri loglarda tablo olarak gosterir.
+- Her arama turunun sonunda eslesen urunleri tek ve hizali fiyat ozeti tablosunda gosterir.
 - Arama hatalarinda Pushover ile uyari gonderir.
 - Amazon gecici `429/5xx` hatalarinda tekrar dener ve gerekirse soguma uygular.
 - Loglari yerel saatle yazar ve her turun sonunda sonraki kontrol zamanini gosterir.
 
 ## Ornek Log Tablosu
 
-Bir urun aramada eslesir ama hedef fiyat altina inmezse loglarda buna benzer bir tablo gorunur:
+Arama dongusundeki tum hedefler kontrol edildikten sonra loglarda buna benzer tek bir tablo gorunur:
 
 ```txt
-[2026-05-02 12:10:05] Arama fiyat tablosu: ipad ikinci el / iPad Air 13 M4 | hedef=35.000,00 TL | bildirim_disi=2
-[2026-05-02 12:10:05] Sira | Fiyat        | Hedef        | Fark         | Urun
-[2026-05-02 12:10:05] -----|--------------|--------------|--------------|-----
-[2026-05-02 12:10:05]    1 |    38.999,00 TL |    35.000,00 TL |    +3.999,00 TL | Apple iPad Air 13 inc...
-[2026-05-02 12:10:05]    2 |    42.500,00 TL |    35.000,00 TL |    +7.500,00 TL | Apple iPad Pro 13 inc...
+[2026-05-02 12:10:05] Arama fiyat ozeti: eslesen_urun=3
+[2026-05-02 12:10:05] Sira | Arama          | Keyword          |          Fiyat |          Hedef |           Fark | Durum
+[2026-05-02 12:10:05] -----+----------------+------------------+----------------+----------------+----------------+-----------
+[2026-05-02 12:10:05]    1 | ipad ikinci el | ipad air 13      |      38.999,00 |      35.000,00 |      +3.999,00 | HEDEF USTU
+[2026-05-02 12:10:05]    2 | ipad ikinci el | ipad pro 13 256  |      59.500,00 |      60.000,00 |        -500,00 | HEDEF ALTI
+[2026-05-02 12:10:05]    3 | mac ikinci el  | macbook air m4   |      49.900,00 |      45.000,00 |      +4.900,00 | HEDEF USTU
 ```
 
-Bu tablo sadece bildirim gonderilmeyen, yani hedef fiyat ustunde kalan eslesmeleri gosterir.
+Tablodaki `Keyword`, config ekraninda `product_name` alanina girdigin metindir. Hedef fiyat ve altindaki urunler icin Pushover bildirim akisi aynen calismaya devam eder.
 
 ## Ornek Yapilandirma
 
@@ -119,7 +120,7 @@ search_targets:
 
 - `name`: Hedefin kisa adi. Bildirimlerde gorunur.
 - `search_name`: Hangi arama sayfasinda aranacagi. Tek arama sayfasi varsa bos olabilir.
-- `product_name`: Amazon sonuc basliginda aranacak metin.
+- `product_name`: Amazon sonuc basliginda aranacak metin. Log ozet tablosunda bu metin gorunur.
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim gonderilir.
 
 ## Notlar
