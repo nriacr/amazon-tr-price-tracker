@@ -110,7 +110,7 @@ class SearchTargetConfig:
 @dataclass
 class SearchWatchConfig:
     name: str
-    search_url: str
+    search_urls: List[str]
     targets: List[SearchTargetConfig]
     max_items_to_scan: int = 24
     notify_once: bool = True
@@ -203,6 +203,17 @@ def parse_bool(raw_value: Any, default: bool = False) -> bool:
     return bool(raw_value)
 
 
+def parse_search_urls(item: Dict[str, Any]) -> List[str]:
+    urls: List[str] = []
+    for field_name in ("search_url", "search_url_2"):
+        raw_url = str(item.get(field_name) or "").strip()
+        if raw_url and raw_url not in urls:
+            urls.append(raw_url)
+    if not urls:
+        raise TrackerError("search_pages icinde en az search_url doldurulmali.")
+    return urls
+
+
 def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchWatchConfig]]:
     payload = load_json(OPTIONS_PATH, {})
     interval_minutes = int(payload.get("interval_minutes", 30))
@@ -233,7 +244,7 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
         page_name = str(item["name"]).strip()
         pages[page_name] = SearchWatchConfig(
             name=page_name,
-            search_url=str(item["search_url"]).strip(),
+            search_urls=parse_search_urls(item),
             targets=[],
             max_items_to_scan=int(item.get("max_items_to_scan", 24)),
             notify_once=parse_bool(item.get("notify_once"), default=True),
@@ -514,6 +525,15 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
     return results
 
 
+def dedupe_search_results(results: List[SearchResultItem]) -> List[SearchResultItem]:
+    deduped: Dict[str, SearchResultItem] = {}
+    for item in results:
+        existing = deduped.get(item.url)
+        if existing is None or item.price < existing.price:
+            deduped[item.url] = item
+    return list(deduped.values())
+
+
 def fetch_search_results(
     session: requests.Session, search_url: str, timeout: int, max_items_to_scan: int
 ) -> List[SearchResultItem]:
@@ -702,7 +722,7 @@ def check_products_once() -> None:
             log(f"Arama atlandi: {watch.name} | Bu arama sayfasina hedef urun eklenmemis.")
             continue
 
-        watch_key = normalize_item_key(watch.name, watch.search_url)
+        watch_key = normalize_item_key(watch.name, *watch.search_urls)
         watch_state = state.get(watch_key, {})
         remaining = cooldown_remaining_seconds(watch_state)
         if remaining > 0:
@@ -717,15 +737,38 @@ def check_products_once() -> None:
             continue
 
         try:
-            results = fetch_search_results(
-                session=session,
-                search_url=watch.search_url,
-                timeout=request_timeout,
-                max_items_to_scan=watch.max_items_to_scan,
-            )
+            all_results: List[SearchResultItem] = []
+            failed_urls: List[str] = []
+            for index, search_url in enumerate(watch.search_urls, start=1):
+                try:
+                    url_results = fetch_search_results(
+                        session=session,
+                        search_url=search_url,
+                        timeout=request_timeout,
+                        max_items_to_scan=watch.max_items_to_scan,
+                    )
+                    all_results.extend(url_results)
+                    log(
+                        f"Arama linki kontrol edildi: {watch.name} | "
+                        f"link={index}/{len(watch.search_urls)} | okunan_urun={len(url_results)}"
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    failed_urls.append(f"{search_url} | {exc}")
+                    log(f"Arama linki hatasi: {watch.name} | link={index}/{len(watch.search_urls)} | {exc}")
+
+            if not all_results:
+                raise TrackerError("Arama sayfasindaki linklerin hicbirinde okunabilir urun bulunamadi.")
+
+            results = dedupe_search_results(all_results)
+            if failed_urls:
+                log(
+                    f"Arama kismen kontrol edildi: {watch.name} | "
+                    f"basarili_link={len(watch.search_urls) - len(failed_urls)} | hatali_link={len(failed_urls)}"
+                )
             log(
                 f"Arama sayfasi kontrol edildi: {watch.name} | "
-                f"okunan_urun={len(results)} | hedef_sayisi={len(watch.targets)}"
+                f"okunan_urun={len(results)} | link_sayisi={len(watch.search_urls)} | "
+                f"hedef_sayisi={len(watch.targets)}"
             )
 
             targets_state = dict(watch_state.get("targets", {}))
@@ -804,7 +847,7 @@ def check_products_once() -> None:
                 "targets": targets_state,
                 "notified_items": notified_items,
                 "last_checked_at": utc_now(),
-                "last_error": None,
+                "last_error": None if not failed_urls else "; ".join(failed_urls)[:900],
                 "last_error_status": None,
                 "last_error_notified_at": watch_state.get("last_error_notified_at"),
                 "last_error_notification_signature": watch_state.get(
@@ -814,7 +857,7 @@ def check_products_once() -> None:
         except Exception as exc:  # noqa: BLE001
             error_message = str(exc)
             error_status = getattr(exc, "status_code", None)
-            log(f"Hata: {watch.search_url} | {error_message}")
+            log(f"Hata: {' | '.join(watch.search_urls)} | {error_message}")
 
             updated_watch_state = dict(watch_state)
             if should_send_error_notification(updated_watch_state, error_message, error_status):
@@ -832,7 +875,7 @@ def check_products_once() -> None:
                         api_token=api_token,
                         title="Amazon arama hatasi",
                         message=message[:900],
-                        url=watch.search_url,
+                        url=watch.search_urls[0],
                         timeout=request_timeout,
                     )
                     updated_watch_state = update_error_notification_state(
