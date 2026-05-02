@@ -7,10 +7,12 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.0.3
+1.0.4
 ```
 
-Bu surumde her `search_pages` kaydina istege bagli `search_url_2` alani eklendi. Boylece ayni arama hedefleri icin hem Amazon Depo linki hem de Amazon'un sol menuden secilen Ikinci El filtreli linki birlikte taranabilir. Bot iki linkten gelen ayni urunu tekillestirir.
+Bu surumde arama sonuc sayfasinin altindaki onerilen/alternatif urun bolumleri tarama disi birakildi. Bot su basliklardan herhangi birini gordugu noktadan sonraki urun kartlarini okumaz: `Yardima mi ihtiyaciniz var?`, `Baktiginiz Urunlere Gore Belirlenen Urunler`, `Tarama gecmisinizdeki urunleri goruntuleyen musteriler ayrica sunlari da goruntuledi:`.
+
+`1.0.3` surumunde her `search_pages` kaydina istege bagli `search_url_2` alani eklendi. Boylece ayni arama hedefleri icin hem Amazon Depo linki hem de Amazon'un sol menuden secilen Ikinci El filtreli linki birlikte taranabilir. Bot iki linkten gelen ayni urunu tekillestirir.
 
 `1.0.2` surumunde arama sonuc kartlarinda `Diger satin alma secenekleri` altinda gorunen `Ikinci El` teklif fiyati okunur. Bir urun kartinda hem sifir urun fiyati hem de ikinci el teklif fiyati varsa bot ikinci el teklif fiyatini oncelikli kullanir.
 
@@ -30,6 +32,7 @@ Sonraki kontrol: 2026-04-30 21:15:00
 
 - Amazon Turkiye urun sayfasini duzenli araliklarla indirir.
 - Filtreli arama sonuc sayfasindaki urun kartlarini tarayabilir.
+- Arama sonuc sayfasinin altindaki onerilen/alternatif urun bloklarini yok sayar.
 - Ayni search page altinda iki farkli Amazon arama linkini birlikte kontrol edebilir.
 - Arama sonucunda `Diger satin alma secenekleri` altindaki ikinci el teklif fiyatini okuyabilir.
 - Tek bir arama sayfasinda birden fazla urun hedefi ve hedef fiyat kontrol edebilir.
