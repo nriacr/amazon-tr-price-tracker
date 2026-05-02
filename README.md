@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.7
+1.2.8
 ```
 
-Bu surum Home Assistant add-on sayfasinda kullanilan `icon.png` ve `logo.png` gorsellerini yeniler. `icon.png` 128x128 kare, `logo.png` 250x100 yatay PNG olarak Home Assistant dokumanindaki onerilen olculere uygun hazirlandi.
+Bu surum Home Assistant arayuzunde logonun ustten kirpilmasina karsi `logo.png` tasarimini ust guvenli alana tasir. Kucuk liste ikonu icin `icon.png` daha sade ve okunur kare ikon olarak yenilendi.
 
 ## Ne Yapar?
 
