@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 
 OPTIONS_PATH = Path("/data/options.json")
 STATE_PATH = Path("/data/state.json")
+STATE_NOTIFICATION_RESET_VERSION = "1.2.0-search-alert-reset"
 PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
 AMAZON_BASE_URL = "https://www.amazon.com.tr"
 ASIN_URL_PATTERN = re.compile(r"/(?:dp|gp/product)/([A-Z0-9]{10})")
@@ -25,7 +26,7 @@ RETRY_DELAYS_SECONDS = [10, 30, 75]
 SEARCH_PRE_DELAY_SECONDS = (5, 18)
 SEARCH_HTTP_COOLDOWN_SECONDS = 45 * 60
 SEARCH_ERROR_NOTIFICATION_COOLDOWN_SECONDS = 6 * 60 * 60
-NOTIFY_ONCE_REPEAT_SECONDS = 24 * 60 * 60
+NOTIFY_REPEAT_SECONDS = 24 * 60 * 60
 USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -119,7 +120,7 @@ class SearchWatchConfig:
     search_urls: List[str]
     targets: List[SearchTargetConfig]
     max_items_to_scan: int = 24
-    notify_once: bool = True
+    notify_once_in_24h: bool = True
 
 
 @dataclass
@@ -196,7 +197,7 @@ def parse_decimal(raw_value: str) -> Decimal:
     try:
         return Decimal(cleaned)
     except InvalidOperation as exc:
-        raise TrackerError(f"Fiyat ayrıştırılamadı: {raw_value!r}") from exc
+        raise TrackerError(f"Fiyat ayristirilamadi: {raw_value!r}") from exc
 
 
 def parse_bool(raw_value: Any, default: bool = False) -> bool:
@@ -233,7 +234,7 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
     if not raw_products and not raw_search_pages:
         raise TrackerError("En az bir products veya search_pages kaydi tanimlanmali.")
     if not pushover_user_key or not pushover_api_token:
-        raise TrackerError("Pushover anahtarları zorunlu.")
+        raise TrackerError("Pushover anahtarlari zorunlu.")
 
     products: List[ProductConfig] = []
     for item in raw_products:
@@ -253,7 +254,7 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
             search_urls=parse_search_urls(item),
             targets=[],
             max_items_to_scan=int(item.get("max_items_to_scan", 24)),
-            notify_once=parse_bool(item.get("notify_once"), default=True),
+            notify_once_in_24h=parse_bool(item.get("notify_once_in_24H"), default=True),
         )
 
     for item in raw_search_targets:
@@ -290,6 +291,40 @@ def load_config() -> Tuple[int, int, str, str, List[ProductConfig], List[SearchW
         products,
         search_watches,
     )
+
+
+def reset_search_alert_state_once(state: Dict[str, Any]) -> Dict[str, Any]:
+    meta = dict(state.get("_meta", {})) if isinstance(state.get("_meta"), dict) else {}
+    if meta.get("search_alert_reset_version") == STATE_NOTIFICATION_RESET_VERSION:
+        return state
+
+    reset_count = 0
+    for key, watch_state in state.items():
+        if key == "_meta" or not isinstance(watch_state, dict):
+            continue
+        targets = watch_state.get("targets")
+        if not isinstance(targets, dict):
+            continue
+        watch_state.pop("notified_items", None)
+        for target_state in targets.values():
+            if not isinstance(target_state, dict):
+                continue
+            items = target_state.get("items")
+            if not isinstance(items, dict):
+                continue
+            for item_state in items.values():
+                if not isinstance(item_state, dict):
+                    continue
+                removed_price = item_state.pop("last_alerted_price", None)
+                removed_at = item_state.pop("last_alerted_at", None)
+                if removed_price is not None or removed_at is not None:
+                    reset_count += 1
+
+    meta["search_alert_reset_version"] = STATE_NOTIFICATION_RESET_VERSION
+    meta["search_alert_reset_at"] = utc_now()
+    state["_meta"] = meta
+    log(f"Arama bildirim susturma kayitlari sifirlandi: {reset_count} urun")
+    return state
 
 
 def build_headers() -> Dict[str, str]:
@@ -362,14 +397,14 @@ def extract_price(html: str) -> Decimal:
         if match:
             return parse_decimal(match.group(1))
 
-    raise TrackerError("Sayfadan fiyat bulunamadı.")
+    raise TrackerError("Sayfadan fiyat bulunamadi.")
 
 
 def fetch_product(session: requests.Session, url: str, timeout: int) -> Tuple[Optional[str], Decimal]:
     response = fetch_with_retries(session, url, timeout)
     html = response.text
     if "captcha" in html.lower() and "robot" in html.lower():
-        raise TrackerError("Amazon bot koruması nedeniyle captcha sayfası döndü.")
+        raise TrackerError("Amazon bot korumasi nedeniyle captcha sayfasi dondu.")
 
     soup = BeautifulSoup(html, "html.parser")
     return extract_title(soup), extract_price(html)
@@ -611,33 +646,29 @@ def should_alert(
     state_entry: Dict[str, Any],
     current_price: Decimal,
     target_price: Decimal,
-    notify_once: bool = False,
+    repeat_after_24h: bool = False,
 ) -> bool:
-    last_alerted_price = state_entry.get("last_alerted_price")
-    was_below = state_entry.get("was_below_target", False)
-    is_below = current_price <= target_price
-
-    if not is_below:
+    if current_price > target_price:
         return False
-    if notify_once and last_alerted_price is not None:
-        try:
-            if current_price < Decimal(str(last_alerted_price)):
-                return True
-        except InvalidOperation:
-            return True
 
+    last_alerted_price = state_entry.get("last_alerted_price")
+    if last_alerted_price is None:
+        return True
+
+    try:
+        if current_price < Decimal(str(last_alerted_price)):
+            return True
+    except InvalidOperation:
+        return True
+
+    if repeat_after_24h:
         last_alerted_at = parse_iso_datetime(state_entry.get("last_alerted_at"))
         if not last_alerted_at:
             return False
-
         elapsed = (datetime.now(timezone.utc) - last_alerted_at).total_seconds()
-        return elapsed >= NOTIFY_ONCE_REPEAT_SECONDS
-    if not was_below or last_alerted_price is None:
-        return True
-    try:
-        return current_price < Decimal(str(last_alerted_price))
-    except InvalidOperation:
-        return True
+        return elapsed >= NOTIFY_REPEAT_SECONDS
+
+    return not state_entry.get("was_below_target", False)
 
 
 def should_send_error_notification(
@@ -710,7 +741,7 @@ def check_products_once() -> None:
     ) = load_config()
     _ = interval_minutes
 
-    state = load_json(STATE_PATH, {})
+    state = reset_search_alert_state_once(load_json(STATE_PATH, {}))
     session = requests.Session()
 
     for product in products:
@@ -814,8 +845,6 @@ def check_products_once() -> None:
             )
 
             targets_state = dict(watch_state.get("targets", {}))
-            notified_items = dict(watch_state.get("notified_items", {}))
-
             for target in watch.targets:
                 target_key = normalize_key(target.name)
                 target_state = targets_state.get(target_key, {})
@@ -831,21 +860,13 @@ def check_products_once() -> None:
                 for match in matches:
                     item_key = normalize_key(match.url)
                     item_state = dict(items_state.get(item_key, {}))
-                    notification_key = normalize_item_key(target_key, match.url)
-                    notified_item = notified_items.get(notification_key, {})
-
-                    if watch.notify_once and notified_item:
-                        if "last_alerted_price" not in item_state and notified_item.get("price") is not None:
-                            item_state["last_alerted_price"] = notified_item.get("price")
-                        if "last_alerted_at" not in item_state and notified_item.get("notified_at"):
-                            item_state["last_alerted_at"] = notified_item.get("notified_at")
-
                     alert_sent = False
+
                     if should_alert(
                         item_state,
                         match.price,
                         target.target_price,
-                        notify_once=watch.notify_once,
+                        repeat_after_24h=watch.notify_once_in_24h,
                     ):
                         message = (
                             f"Arama: {watch.name}\n"
@@ -864,15 +885,8 @@ def check_products_once() -> None:
                             timeout=request_timeout,
                         )
                         alert_sent = True
-                        notified_items[notification_key] = {
-                            "target": target.name,
-                            "title": match.title,
-                            "url": match.url,
-                            "price": str(match.price),
-                            "notified_at": utc_now(),
-                        }
                         log(f"Arama bildirimi gonderildi: {target.name} | {match.title}")
-                    elif watch.notify_once and notified_item:
+                    elif match.price <= target.target_price and watch.notify_once_in_24h:
                         log(
                             f"Arama bildirimi atlandi, 24 saat dolmadi veya fiyat daha dusuk degil: "
                             f"{match.title} | fiyat={match.price} TL"
@@ -896,7 +910,6 @@ def check_products_once() -> None:
 
             state[watch_key] = {
                 "targets": targets_state,
-                "notified_items": notified_items,
                 "last_checked_at": utc_now(),
                 "last_error": None if not failed_urls else "; ".join(failed_urls)[:900],
                 "last_error_status": None,
