@@ -132,7 +132,6 @@ class SearchResultItem:
 
 @dataclass
 class SearchPriceLogRow:
-    search_name: str
     product_name: str
     price: Decimal
     target_price: Decimal
@@ -514,30 +513,24 @@ def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
         log("Ozet: eslesen=0")
         return
 
-    rows.sort(key=lambda row: (normalize_text(row.search_name), normalize_text(row.product_name), row.price))
+    rows.sort(key=lambda row: (normalize_text(row.product_name), row.price))
     no_width = 3
-    search_width = 8
-    keyword_width = 18
+    product_width = 36
     price_width = 10
-    status_width = 4
 
     header = (
         f"{'No':>{no_width}} | "
-        f"{log_cell('Ara', search_width)} | "
-        f"{log_cell('Key', keyword_width)} | "
+        f"{log_cell('Ürün Adı', product_width)} | "
         f"{'Fiyat':>{price_width}} | "
         f"{'Hedef':>{price_width}} | "
-        f"{'Fark':>{price_width}} | "
-        f"{'D':>{status_width}}"
+        f"{'Fark':>{price_width}}"
     )
     separator = (
         f"{'-' * no_width}-+-"
-        f"{'-' * search_width}-+-"
-        f"{'-' * keyword_width}-+-"
+        f"{'-' * product_width}-+-"
         f"{'-' * price_width}-+-"
         f"{'-' * price_width}-+-"
-        f"{'-' * price_width}-+-"
-        f"{'-' * status_width}"
+        f"{'-' * price_width}"
     )
 
     log(f"Ozet: eslesen={len(rows)}")
@@ -545,15 +538,12 @@ def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
     log(separator)
     for index, row in enumerate(rows, start=1):
         difference = row.price - row.target_price
-        status = "ALTI" if row.price <= row.target_price else "USTU"
         log(
             f"{index:>{no_width}} | "
-            f"{log_cell(row.search_name, search_width)} | "
-            f"{log_cell(row.product_name, keyword_width)} | "
+            f"{log_cell(row.product_name, product_width)} | "
             f"{format_tl(row.price):>{price_width}} | "
             f"{format_tl(row.target_price):>{price_width}} | "
-            f"{format_signed_tl(difference):>{price_width}} | "
-            f"{status:>{status_width}}"
+            f"{format_signed_tl(difference):>{price_width}}"
         )
 
 
@@ -941,7 +931,6 @@ def check_products_once() -> None:
                 for match in matches:
                     search_price_log_rows.append(
                         SearchPriceLogRow(
-                            search_name=watch.name,
                             product_name=target.product_name,
                             price=match.price,
                             target_price=target.target_price,
