@@ -511,32 +511,27 @@ def log_cell(value: str, width: int, align: str = "left") -> str:
 
 def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
     if not rows:
-        log("Arama fiyat ozeti: Bu turda eslesen urun bulunamadi.")
+        log("Ozet: eslesen=0")
         return
 
     rows.sort(key=lambda row: (normalize_text(row.search_name), normalize_text(row.product_name), row.price))
-    search_width = min(
-        22,
-        max([len("Arama")] + [len(shorten_log_text(row.search_name, 22)) for row in rows]),
-    )
-    keyword_width = min(
-        32,
-        max([len("Keyword")] + [len(shorten_log_text(row.product_name, 32)) for row in rows]),
-    )
-    price_width = 14
-    status_width = 10
+    no_width = 3
+    search_width = 8
+    keyword_width = 18
+    price_width = 10
+    status_width = 4
 
     header = (
-        f"{'Sira':>4} | "
-        f"{log_cell('Arama', search_width)} | "
-        f"{log_cell('Keyword', keyword_width)} | "
+        f"{'No':>{no_width}} | "
+        f"{log_cell('Ara', search_width)} | "
+        f"{log_cell('Key', keyword_width)} | "
         f"{'Fiyat':>{price_width}} | "
         f"{'Hedef':>{price_width}} | "
         f"{'Fark':>{price_width}} | "
-        f"{log_cell('Durum', status_width)}"
+        f"{'D':>{status_width}}"
     )
     separator = (
-        f"{'-' * 4}-+-"
+        f"{'-' * no_width}-+-"
         f"{'-' * search_width}-+-"
         f"{'-' * keyword_width}-+-"
         f"{'-' * price_width}-+-"
@@ -545,20 +540,20 @@ def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
         f"{'-' * status_width}"
     )
 
-    log(f"Arama fiyat ozeti: eslesen_urun={len(rows)}")
+    log(f"Ozet: eslesen={len(rows)}")
     log(header)
     log(separator)
     for index, row in enumerate(rows, start=1):
         difference = row.price - row.target_price
-        status = "HEDEF ALTI" if row.price <= row.target_price else "HEDEF USTU"
+        status = "ALTI" if row.price <= row.target_price else "USTU"
         log(
-            f"{index:>4} | "
+            f"{index:>{no_width}} | "
             f"{log_cell(row.search_name, search_width)} | "
             f"{log_cell(row.product_name, keyword_width)} | "
             f"{format_tl(row.price):>{price_width}} | "
             f"{format_tl(row.target_price):>{price_width}} | "
             f"{format_signed_tl(difference):>{price_width}} | "
-            f"{log_cell(status, status_width)}"
+            f"{status:>{status_width}}"
         )
 
 
