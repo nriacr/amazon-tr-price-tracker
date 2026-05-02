@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.4
+1.2.5
 ```
 
-Bu surum arama fiyat ozeti tablosunu sadeleştirir: `Ara` ve `D` sutunlari kaldirildi, `Key` basligi `Ürün Adı` olarak degistirildi ve urun adi alani 36 karaktere genisletildi.
+Bu surum arama fiyat ozeti tablosunu dogrudan `main.py` icinde sadeleştirir. `Ara` ve `D` sutunlari kaldirildi, `Key` basligi `Ürün Adı` olarak degistirildi ve urun adi alani 36 karaktere genisletildi.
 
 ## Ne Yapar?
 
