@@ -25,6 +25,7 @@ RETRY_DELAYS_SECONDS = [10, 30, 75]
 SEARCH_PRE_DELAY_SECONDS = (5, 18)
 SEARCH_HTTP_COOLDOWN_SECONDS = 45 * 60
 SEARCH_ERROR_NOTIFICATION_COOLDOWN_SECONDS = 6 * 60 * 60
+NOTIFY_ONCE_REPEAT_SECONDS = 24 * 60 * 60
 USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -620,9 +621,17 @@ def should_alert(
         return False
     if notify_once and last_alerted_price is not None:
         try:
-            return current_price < Decimal(str(last_alerted_price))
+            if current_price < Decimal(str(last_alerted_price)):
+                return True
         except InvalidOperation:
             return True
+
+        last_alerted_at = parse_iso_datetime(state_entry.get("last_alerted_at"))
+        if not last_alerted_at:
+            return False
+
+        elapsed = (datetime.now(timezone.utc) - last_alerted_at).total_seconds()
+        return elapsed >= NOTIFY_ONCE_REPEAT_SECONDS
     if not was_below or last_alerted_price is None:
         return True
     try:
@@ -825,12 +834,11 @@ def check_products_once() -> None:
                     notification_key = normalize_item_key(target_key, match.url)
                     notified_item = notified_items.get(notification_key, {})
 
-                    if (
-                        watch.notify_once
-                        and "last_alerted_price" not in item_state
-                        and notified_item.get("price") is not None
-                    ):
-                        item_state["last_alerted_price"] = notified_item.get("price")
+                    if watch.notify_once and notified_item:
+                        if "last_alerted_price" not in item_state and notified_item.get("price") is not None:
+                            item_state["last_alerted_price"] = notified_item.get("price")
+                        if "last_alerted_at" not in item_state and notified_item.get("notified_at"):
+                            item_state["last_alerted_at"] = notified_item.get("notified_at")
 
                     alert_sent = False
                     if should_alert(
@@ -866,8 +874,8 @@ def check_products_once() -> None:
                         log(f"Arama bildirimi gonderildi: {target.name} | {match.title}")
                     elif watch.notify_once and notified_item:
                         log(
-                            f"Arama bildirimi atlandi, fiyat daha dusuk degil: {match.title} | "
-                            f"fiyat={match.price} TL"
+                            f"Arama bildirimi atlandi, 24 saat dolmadi veya fiyat daha dusuk degil: "
+                            f"{match.title} | fiyat={match.price} TL"
                         )
 
                     updated_items_state[item_key] = update_state_entry(
