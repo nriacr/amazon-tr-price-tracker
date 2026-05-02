@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.6
+1.2.7
 ```
 
-Bu surum arama fiyat ozeti tablosunda `Urun Adi` sutununu Amazon'da bulunan gercek urun basligindan doldurur. Sutun 40 karakterle sinirlanir; uzun basliklar log ekranina sigmasi icin kisaltilir.
+Bu surum Home Assistant add-on sayfasinda kullanilan `icon.png` ve `logo.png` gorsellerini yeniler. `icon.png` 128x128 kare, `logo.png` 250x100 yatay PNG olarak Home Assistant dokumanindaki onerilen olculere uygun hazirlandi.
 
 ## Ne Yapar?
 
