@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.5
+1.2.6
 ```
 
-Bu surum arama fiyat ozeti tablosunu dogrudan `main.py` icinde sadeleştirir. `Ara` ve `D` sutunlari kaldirildi, `Key` basligi `Ürün Adı` olarak degistirildi ve urun adi alani 36 karaktere genisletildi.
+Bu surum arama fiyat ozeti tablosunda `Urun Adi` sutununu Amazon'da bulunan gercek urun basligindan doldurur. Sutun 40 karakterle sinirlanir; uzun basliklar log ekranina sigmasi icin kisaltilir.
 
 ## Ne Yapar?
 
@@ -33,14 +33,14 @@ Arama dongusundeki tum hedefler kontrol edildikten sonra loglarda buna benzer bi
 
 ```txt
 [2026-05-02 12:10:05] Ozet: eslesen=3
-[2026-05-02 12:10:05]  No | Ürün Adı                            |      Fiyat |      Hedef |       Fark
-[2026-05-02 12:10:05] ----+--------------------------------------+------------+------------+-----------
-[2026-05-02 12:10:05]   1 | Philips Hue Essential               |   3.771,49 |   2.000,00 |  +1.771,49
-[2026-05-02 12:10:05]   2 | Apple iPad Air 13 inc M4            |  46.169,10 |  40.000,00 |  +6.169,10
-[2026-05-02 12:10:05]   3 | Tapo C425                            |   3.424,20 |   3.100,00 |    +324,20
+[2026-05-02 12:10:05]  No | Urun Adi                                 |      Fiyat |      Hedef |       Fark
+[2026-05-02 12:10:05] ----+------------------------------------------+------------+------------+-----------
+[2026-05-02 12:10:05]   1 | Philips Hue Essential Akilli LED Ampul... |   3.771,49 |   2.000,00 |  +1.771,49
+[2026-05-02 12:10:05]   2 | Apple iPad Air 13 inc (M4): Liquid Ret... |  46.169,10 |  40.000,00 |  +6.169,10
+[2026-05-02 12:10:05]   3 | Tapo C425 Kablosuz Guvenlik Kamerasi      |   3.424,20 |   3.100,00 |    +324,20
 ```
 
-Tablodaki `Ürün Adı`, config ekraninda `product_name` alanina girdigin metindir. Hedef fiyat ve altindaki urunler icin Pushover bildirim akisi aynen calismaya devam eder.
+Tablodaki `Urun Adi`, Amazon arama sonucunda bulunan gercek urun basligidir. Config ekraninda yazdigin `product_name` ise sadece eslesme yapmak icin kullanilir. Hedef fiyat ve altindaki urunler icin Pushover bildirim akisi aynen calismaya devam eder.
 
 ## Ornek Yapilandirma
 
@@ -120,7 +120,7 @@ search_targets:
 
 - `name`: Hedefin kisa adi. Bildirimlerde gorunur.
 - `search_name`: Hangi arama sayfasinda aranacagi. Tek arama sayfasi varsa bos olabilir.
-- `product_name`: Amazon sonuc basliginda aranacak metin. Log ozet tablosunda `Ürün Adı` olarak gorunur.
+- `product_name`: Amazon sonuc basliginda aranacak metin. Log ozet tablosunda gorunen isim degildir; tablo Amazon'dan bulunan gercek urun basligini gosterir.
 - `target_price`: Bu fiyat ve altindaki eslesmeler icin bildirim gonderilir.
 
 ## Notlar
