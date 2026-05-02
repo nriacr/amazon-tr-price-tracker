@@ -87,6 +87,11 @@ CARD_TITLE_SELECTORS = [
     "[data-cy='title-recipe'] span",
     "a.a-link-normal span",
 ]
+SEARCH_STOP_SECTION_MARKERS = (
+    "yardima mi ihtiyaciniz var",
+    "baktiginiz urunlere gore belirlenen urunler",
+    "tarama gecmisinizdeki urunleri goruntuleyen musteriler ayrica sunlari da goruntuledi",
+)
 SECONDARY_OFFER_PRICE_PATTERN = re.compile(
     r"diger\s+satin\s+alma\s+secenekleri\s+"
     r"(?P<price>\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:,\d{2})?)\s*tl"
@@ -403,6 +408,31 @@ def normalize_offer_text(value: str) -> str:
     return re.sub(r"\s+", " ", normalized).strip()
 
 
+def is_search_stop_section_text(value: str) -> bool:
+    normalized = normalize_offer_text(value)
+    return any(marker in normalized for marker in SEARCH_STOP_SECTION_MARKERS)
+
+
+def find_search_stop_marker(soup: BeautifulSoup) -> Optional[Any]:
+    for text_node in soup.find_all(string=True):
+        if is_search_stop_section_text(str(text_node)):
+            return text_node
+    return None
+
+
+def filter_cards_before_stop_sections(cards: List[Any], soup: BeautifulSoup) -> List[Any]:
+    marker = find_search_stop_marker(soup)
+    if marker is None:
+        return cards
+
+    after_marker_ids = {
+        id(element)
+        for element in marker.next_elements
+        if getattr(element, "name", None)
+    }
+    return [card for card in cards if id(card) not in after_marker_ids]
+
+
 def normalize_key(url: str) -> str:
     return re.sub(r"[^a-zA-Z0-9]+", "_", url).strip("_").lower()
 
@@ -499,7 +529,7 @@ def extract_search_results(html: str, max_items_to_scan: int) -> List[SearchResu
     soup = BeautifulSoup(html, "html.parser")
     cards: List[Any] = []
     for selector in SEARCH_CARD_SELECTORS:
-        candidate_cards = soup.select(selector)
+        candidate_cards = filter_cards_before_stop_sections(soup.select(selector), soup)
         if candidate_cards:
             cards = candidate_cards
             break
