@@ -477,6 +477,45 @@ def normalize_item_key(*parts: str) -> str:
     return normalize_key("_".join(parts))
 
 
+def format_tl(value: Decimal) -> str:
+    formatted = f"{value:,.2f}"
+    return formatted.replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def shorten_log_text(value: str, max_length: int = 90) -> str:
+    clean = re.sub(r"\s+", " ", value).strip()
+    if len(clean) <= max_length:
+        return clean
+    return clean[: max_length - 3].rstrip() + "..."
+
+
+def log_above_target_matches(
+    watch_name: str,
+    target: SearchTargetConfig,
+    matches: List[SearchResultItem],
+) -> None:
+    rows = [item for item in matches if item.price > target.target_price]
+    if not rows:
+        return
+
+    rows.sort(key=lambda item: item.price)
+    log(
+        f"Arama fiyat tablosu: {watch_name} / {target.name} | "
+        f"hedef={format_tl(target.target_price)} TL | bildirim_disi={len(rows)}"
+    )
+    log("Sira | Fiyat        | Hedef        | Fark         | Urun")
+    log("-----|--------------|--------------|--------------|-----")
+    for index, item in enumerate(rows, start=1):
+        difference_text = f"+{format_tl(item.price - target.target_price)}"
+        log(
+            f"{index:>4} | "
+            f"{format_tl(item.price):>12} TL | "
+            f"{format_tl(target.target_price):>12} TL | "
+            f"{difference_text:>12} TL | "
+            f"{shorten_log_text(item.title)}"
+        )
+
+
 def extract_card_title(card: BeautifulSoup) -> Optional[str]:
     for selector in CARD_TITLE_SELECTORS:
         element = card.select_one(selector)
@@ -856,6 +895,7 @@ def check_products_once() -> None:
                     f"Arama hedefi kontrol edildi: {watch.name} / {target.name} | "
                     f"eslesen_urun={len(matches)} | hedef={target.target_price} TL"
                 )
+                log_above_target_matches(watch.name, target, matches)
 
                 for match in matches:
                     item_key = normalize_key(match.url)
