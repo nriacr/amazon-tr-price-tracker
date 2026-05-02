@@ -7,7 +7,7 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.0.5
+1.1.0
 ```
 
 Bu surumde `notify_once: true` davranisi 24 saatlik tekrar susturma olarak guncellendi. Ayni urun ayni veya daha yuksek fiyatta kalirsa 24 saat icinde tekrar bildirim gelmez; 24 saat dolduktan sonra hala hedef fiyat altindaysa tekrar hatirlatabilir. Fiyat daha once bildirilen fiyattan daha dusuge inerse 24 saat beklemeden yeniden bildirim gelir.
