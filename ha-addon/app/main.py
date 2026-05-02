@@ -130,6 +130,14 @@ class SearchResultItem:
     price: Decimal
 
 
+@dataclass
+class SearchPriceLogRow:
+    search_name: str
+    product_name: str
+    price: Decimal
+    target_price: Decimal
+
+
 class TrackerError(Exception):
     pass
 
@@ -482,6 +490,11 @@ def format_tl(value: Decimal) -> str:
     return formatted.replace(",", "_").replace(".", ",").replace("_", ".")
 
 
+def format_signed_tl(value: Decimal) -> str:
+    sign = "+" if value >= 0 else "-"
+    return f"{sign}{format_tl(abs(value))}"
+
+
 def shorten_log_text(value: str, max_length: int = 90) -> str:
     clean = re.sub(r"\s+", " ", value).strip()
     if len(clean) <= max_length:
@@ -489,30 +502,63 @@ def shorten_log_text(value: str, max_length: int = 90) -> str:
     return clean[: max_length - 3].rstrip() + "..."
 
 
-def log_above_target_matches(
-    watch_name: str,
-    target: SearchTargetConfig,
-    matches: List[SearchResultItem],
-) -> None:
-    rows = [item for item in matches if item.price > target.target_price]
+def log_cell(value: str, width: int, align: str = "left") -> str:
+    text = shorten_log_text(value, width)
+    if align == "right":
+        return text.rjust(width)
+    return text.ljust(width)
+
+
+def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
     if not rows:
+        log("Arama fiyat ozeti: Bu turda eslesen urun bulunamadi.")
         return
 
-    rows.sort(key=lambda item: item.price)
-    log(
-        f"Arama fiyat tablosu: {watch_name} / {target.name} | "
-        f"hedef={format_tl(target.target_price)} TL | bildirim_disi={len(rows)}"
+    rows.sort(key=lambda row: (normalize_text(row.search_name), normalize_text(row.product_name), row.price))
+    search_width = min(
+        22,
+        max([len("Arama")] + [len(shorten_log_text(row.search_name, 22)) for row in rows]),
     )
-    log("Sira | Fiyat        | Hedef        | Fark         | Urun")
-    log("-----|--------------|--------------|--------------|-----")
-    for index, item in enumerate(rows, start=1):
-        difference_text = f"+{format_tl(item.price - target.target_price)}"
+    keyword_width = min(
+        32,
+        max([len("Keyword")] + [len(shorten_log_text(row.product_name, 32)) for row in rows]),
+    )
+    price_width = 14
+    status_width = 10
+
+    header = (
+        f"{'Sira':>4} | "
+        f"{log_cell('Arama', search_width)} | "
+        f"{log_cell('Keyword', keyword_width)} | "
+        f"{'Fiyat':>{price_width}} | "
+        f"{'Hedef':>{price_width}} | "
+        f"{'Fark':>{price_width}} | "
+        f"{log_cell('Durum', status_width)}"
+    )
+    separator = (
+        f"{'-' * 4}-+-"
+        f"{'-' * search_width}-+-"
+        f"{'-' * keyword_width}-+-"
+        f"{'-' * price_width}-+-"
+        f"{'-' * price_width}-+-"
+        f"{'-' * price_width}-+-"
+        f"{'-' * status_width}"
+    )
+
+    log(f"Arama fiyat ozeti: eslesen_urun={len(rows)}")
+    log(header)
+    log(separator)
+    for index, row in enumerate(rows, start=1):
+        difference = row.price - row.target_price
+        status = "HEDEF ALTI" if row.price <= row.target_price else "HEDEF USTU"
         log(
             f"{index:>4} | "
-            f"{format_tl(item.price):>12} TL | "
-            f"{format_tl(target.target_price):>12} TL | "
-            f"{difference_text:>12} TL | "
-            f"{shorten_log_text(item.title)}"
+            f"{log_cell(row.search_name, search_width)} | "
+            f"{log_cell(row.product_name, keyword_width)} | "
+            f"{format_tl(row.price):>{price_width}} | "
+            f"{format_tl(row.target_price):>{price_width}} | "
+            f"{format_signed_tl(difference):>{price_width}} | "
+            f"{log_cell(status, status_width)}"
         )
 
 
@@ -782,6 +828,7 @@ def check_products_once() -> None:
 
     state = reset_search_alert_state_once(load_json(STATE_PATH, {}))
     session = requests.Session()
+    search_price_log_rows: List[SearchPriceLogRow] = []
 
     for product in products:
         product_key = normalize_key(product.url)
@@ -895,9 +942,16 @@ def check_products_once() -> None:
                     f"Arama hedefi kontrol edildi: {watch.name} / {target.name} | "
                     f"eslesen_urun={len(matches)} | hedef={target.target_price} TL"
                 )
-                log_above_target_matches(watch.name, target, matches)
 
                 for match in matches:
+                    search_price_log_rows.append(
+                        SearchPriceLogRow(
+                            search_name=watch.name,
+                            product_name=target.product_name,
+                            price=match.price,
+                            target_price=target.target_price,
+                        )
+                    )
                     item_key = normalize_key(match.url)
                     item_state = dict(items_state.get(item_key, {}))
                     alert_sent = False
@@ -994,6 +1048,8 @@ def check_products_once() -> None:
             updated_watch_state["last_checked_at"] = utc_now()
             state[watch_key] = updated_watch_state
 
+    if search_watches:
+        log_search_price_summary(search_price_log_rows)
     save_json(STATE_PATH, state)
 
 
