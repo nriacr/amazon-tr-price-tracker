@@ -10,9 +10,7 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 1.2.0
 ```
 
-Bu surum kod temizligi ve sadeleştirme surumudur. Eski `notify_once` gecis katmani, `run.sh` icindeki config donusturme kodu ve eski `notified_items` bildirim bastirma listesi kaldirildi. Artik tek gecerli alan `notify_once_in_24H`.
-
-Ilk calistirmada eski arama bildirimi susturma kayitlari bir defaya mahsus sifirlanir. Bu nedenle daha once susturulmus uygun firsatlar yeniden bildirim gonderebilir.
+Bu surum kod temizligi ve sadeleştirme surumudur. Bildirim tekrari icin tek gecerli ayar `notify_once_in_24H` alanidir. Ilk calistirmada eski arama bildirimi susturma kayitlari bir defaya mahsus sifirlanir. Bu nedenle daha once susturulmus uygun firsatlar yeniden bildirim gonderebilir.
 
 ## Ne Yapar?
 
