@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.10
+1.2.11
 ```
 
-Bu surum sidebar durum ekranina `Loglari Ac` ve `Ayarlari Ac` kisayollari ekler. Butonlar Home Assistant add-on sayfasindaki ilgili sekmeleri acacak sekilde ayarlandi.
+Bu surum sidebar durum ekranindaki metinleri daha tutarli Turkcelestirir. `Kayitli hata` alani `Hata sayisi` olarak degistirildi; calisan durum yesil, hata sayisi varsa kirmizi vurgulanir.
 
 ## Ne Yapar?
 
@@ -24,7 +24,7 @@ Bu surum sidebar durum ekranina `Loglari Ac` ve `Ayarlari Ac` kisayollari ekler.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
 - Her arama turunun sonunda eslesen urunleri tek fiyat ozeti tablosunda gosterir.
 - Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
-- Sidebar ekranindan Log ve Configuration sekmelerine kisa yol sunar.
+- Sidebar ekranindan kayit ve ayar sekmelerine kisa yol sunar.
 - Arama hatalarinda Pushover ile uyari gonderir.
 - Amazon gecici `429/5xx` hatalarinda tekrar dener ve gerekirse soguma uygular.
 - Loglari yerel saatle yazar ve her turun sonunda sonraki kontrol zamanini gosterir.
@@ -37,7 +37,7 @@ Add-on guncellendikten ve yeniden baslatildiktan sonra Home Assistant add-on Inf
 2. Add-on'u yeniden baslat.
 3. Add-on Info ekraninda `Show in sidebar` secenegini ac.
 4. Sol menude `Amazon Tracker` kisayolu gorunur.
-5. Sidebar ekranindaki `Loglari Ac` butonu add-on Log sekmesini acar.
+5. Sidebar ekranindaki `Kayitlari Ac` butonu add-on Log sekmesini acar.
 6. Sidebar ekranindaki `Ayarlari Ac` butonu add-on Configuration sekmesini acar.
 
 Sidebar sayfasi 60 saniyede bir otomatik yenilenir. Ayar degistirmek icin yine add-on `Configuration` sekmesini, ayrintili takip icin `Log` sekmesini kullan.
