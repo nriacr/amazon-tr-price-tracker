@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.12
+2.0
 ```
 
-Bu surum sidebar durum ekranindaki `Hata sayisi` alanini son 24 saatle sinirlar. Eski state kayitlarinda kalmis bayat hatalar artik sayaci sisirmez; 24 saatten eski hatalar ekranda otomatik olarak dusmus kabul edilir.
+Bu surumle versiyonlama iki basamakli duzene gecirildi. Bundan sonra surumler `2.1`, `2.2`, `2.3` seklinde ilerler. Sidebar ekranindaki ayar kisayolu da daha guvenli hale getirildi: dogrudan hassas sekme adresine gitmek yerine add-on sayfasini acar; ayar degistirmek icin acilan sayfada Configuration sekmesine gecilir.
 
 ## Ne Yapar?
 
@@ -24,7 +24,7 @@ Bu surum sidebar durum ekranindaki `Hata sayisi` alanini son 24 saatle sinirlar.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
 - Her arama turunun sonunda eslesen urunleri tek fiyat ozeti tablosunda gosterir.
 - Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
-- Sidebar ekranindan kayit ve ayar sekmelerine kisa yol sunar.
+- Sidebar ekranindan kayitlara ve add-on sayfasina kisa yol sunar.
 - Sidebar hata sayisini sadece son 24 saat icin hesaplar.
 - Arama hatalarinda Pushover ile uyari gonderir.
 - Amazon gecici `429/5xx` hatalarinda tekrar dener ve gerekirse soguma uygular.
@@ -39,9 +39,10 @@ Add-on guncellendikten ve yeniden baslatildiktan sonra Home Assistant add-on Inf
 3. Add-on Info ekraninda `Show in sidebar` secenegini ac.
 4. Sol menude `Amazon Tracker` kisayolu gorunur.
 5. Sidebar ekranindaki `Kayitlari Ac` butonu add-on Log sekmesini acar.
-6. Sidebar ekranindaki `Ayarlari Ac` butonu add-on Configuration sekmesini acar.
+6. Sidebar ekranindaki `Add-on Sayfasini Ac` butonu add-on ana sayfasini acar.
+7. Ayar degistirmek icin acilan add-on sayfasinda `Configuration` sekmesine gec.
 
-Sidebar sayfasi 60 saniyede bir otomatik yenilenir. `Hata sayisi` yalnizca son 24 saatte kaydedilen hatalari sayar. Ayar degistirmek icin yine add-on `Configuration` sekmesini, ayrintili takip icin `Log` sekmesini kullan.
+Sidebar sayfasi 60 saniyede bir otomatik yenilenir. `Hata sayisi` yalnizca son 24 saatte kaydedilen hatalari sayar.
 
 ## Ornek Log Tablosu
 
