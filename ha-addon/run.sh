@@ -3,6 +3,7 @@ set -eu
 
 python3 - <<'PY' &
 import json
+import os
 from datetime import datetime
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,6 +13,7 @@ from typing import Any
 OPTIONS_PATH = Path('/data/options.json')
 STATE_PATH = Path('/data/state.json')
 WEB_PORT = 8099
+ADDON_SLUG = 'amazon_tr_price_tracker'
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -38,6 +40,20 @@ def format_datetime(value: datetime | None) -> str:
     if value is None:
         return '-'
     return value.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def addon_id_candidates() -> list[str]:
+    candidates: list[str] = []
+    hostname = os.getenv('HOSTNAME', '').strip()
+    if hostname:
+        candidates.append(hostname.replace('-', '_'))
+    candidates.extend([ADDON_SLUG, f'local_{ADDON_SLUG}'])
+
+    unique_candidates: list[str] = []
+    for candidate in candidates:
+        if candidate and candidate not in unique_candidates:
+            unique_candidates.append(candidate)
+    return unique_candidates
 
 
 def collect_summary() -> dict[str, Any]:
@@ -81,6 +97,8 @@ def collect_summary() -> dict[str, Any]:
 def render_page() -> bytes:
     summary = collect_summary()
     status = 'Çalışıyor' if summary['configured'] else 'Ayar bekliyor'
+    log_url = f"/hassio/addon/{addon_id_candidates()[0]}/logs"
+    config_url = f"/hassio/addon/{addon_id_candidates()[0]}/config"
     cards = [
         ('Durum', status),
         ('Kontrol aralığı', f"{summary['interval']} dakika"),
@@ -102,7 +120,7 @@ def render_page() -> bytes:
   <meta http-equiv="refresh" content="60">
   <title>Amazon TR Price Tracker</title>
   <style>
-    :root {{ color-scheme: dark; --bg:#121212; --panel:#1f1f1f; --line:#333; --text:#f1f1f1; --muted:#aaa; --accent:#ff9900; }}
+    :root {{ color-scheme: dark; --bg:#121212; --panel:#1f1f1f; --line:#333; --text:#f1f1f1; --muted:#aaa; --accent:#ff9900; --accent2:#f6c453; }}
     * {{ box-sizing: border-box; }}
     body {{ margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: radial-gradient(circle at top left, #2b2112, var(--bg) 42%); color:var(--text); }}
     main {{ max-width: 920px; margin: 0 auto; padding: 28px 18px 44px; }}
@@ -110,6 +128,10 @@ def render_page() -> bytes:
     h1 {{ margin:0 0 8px; font-size: clamp(28px, 5vw, 44px); letter-spacing:-.04em; }}
     p {{ margin:0; color:var(--muted); line-height:1.55; }}
     .badge {{ display:inline-flex; gap:8px; align-items:center; margin-bottom:18px; color:#171717; background:var(--accent); border-radius:999px; padding:8px 13px; font-weight:700; }}
+    .actions {{ display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }}
+    .button {{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; border-radius:14px; border:1px solid transparent; text-decoration:none; font-weight:800; }}
+    .button.primary {{ color:#161616; background:linear-gradient(135deg, var(--accent), var(--accent2)); }}
+    .button.secondary {{ color:var(--text); background:#202020; border-color:var(--line); }}
     .grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:18px; }}
     .card {{ border:1px solid var(--line); border-radius:16px; padding:16px; background:#181818; min-height:92px; }}
     .card span {{ display:block; color:var(--muted); font-size:13px; margin-bottom:10px; }}
@@ -124,8 +146,12 @@ def render_page() -> bytes:
       <div class="badge">amazon.tr alarm</div>
       <h1>Amazon TR Price Tracker</h1>
       <p>Bu sayfa Home Assistant kenar çubuğu için kısa durum ekranıdır. Fiyat takibi arka planda çalışmaya devam eder.</p>
+      <div class="actions">
+        <a class="button primary" href="{escape(log_url)}" target="_top">Logları Aç</a>
+        <a class="button secondary" href="{escape(config_url)}" target="_top">Ayarları Aç</a>
+      </div>
       <div class="grid">{card_html}</div>
-      <p class="note">Ayarları değiştirmek için add-on <strong>Configuration</strong> sekmesini, ayrıntılı takip için <strong>Log</strong> sekmesini kullan.</p>
+      <p class="note">Log ve ayar butonları Home Assistant add-on sayfasındaki ilgili sekmeleri açar.</p>
       <p class="footer">Sayfa 60 saniyede bir otomatik yenilenir.</p>
     </div>
   </main>
