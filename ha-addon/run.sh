@@ -4,7 +4,7 @@ set -eu
 python3 - <<'PY' &
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -62,6 +62,7 @@ def collect_summary() -> dict[str, Any]:
     products = options.get('products') if isinstance(options.get('products'), list) else []
     search_pages = options.get('search_pages') if isinstance(options.get('search_pages'), list) else []
     search_targets = options.get('search_targets') if isinstance(options.get('search_targets'), list) else []
+    error_cutoff = datetime.now().astimezone() - timedelta(hours=24)
 
     last_checks = []
     error_count = 0
@@ -72,7 +73,7 @@ def collect_summary() -> dict[str, Any]:
             checked_at = parse_datetime(value.get('last_checked_at'))
             if checked_at:
                 last_checks.append(checked_at)
-            if value.get('last_error'):
+            if value.get('last_error') and checked_at and checked_at >= error_cutoff:
                 error_count += 1
             targets = value.get('targets')
             if isinstance(targets, dict):
@@ -159,7 +160,7 @@ def render_page() -> bytes:
         <a class="button secondary" href="{escape(config_url)}" target="_top">Ayarları Aç</a>
       </div>
       <div class="grid">{card_html}</div>
-      <p class="note">Kayıt ve ayar butonları Home Assistant add-on sayfasındaki ilgili sekmeleri açar.</p>
+      <p class="note">Kayıt ve ayar butonları Home Assistant add-on sayfasındaki ilgili sekmeleri açar. Hata sayısı yalnızca son 24 saati kapsar.</p>
       <p class="footer">Sayfa 60 saniyede bir otomatik yenilenir.</p>
     </div>
   </main>
