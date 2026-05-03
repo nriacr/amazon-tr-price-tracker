@@ -42,18 +42,16 @@ def format_datetime(value: datetime | None) -> str:
     return value.strftime('%Y-%m-%d %H:%M:%S')
 
 
-def addon_id_candidates() -> list[str]:
-    candidates: list[str] = []
+def current_addon_id() -> str:
     hostname = os.getenv('HOSTNAME', '').strip()
+    slug_hostname = ADDON_SLUG.replace('_', '-')
+    if hostname.endswith(f'-{slug_hostname}'):
+        repo_id = hostname[: -(len(slug_hostname) + 1)]
+        if repo_id:
+            return f'{repo_id}_{ADDON_SLUG}'
     if hostname:
-        candidates.append(hostname.replace('-', '_'))
-    candidates.extend([ADDON_SLUG, f'local_{ADDON_SLUG}'])
-
-    unique_candidates: list[str] = []
-    for candidate in candidates:
-        if candidate and candidate not in unique_candidates:
-            unique_candidates.append(candidate)
-    return unique_candidates
+        return hostname.replace('-', '_')
+    return f'local_{ADDON_SLUG}'
 
 
 def collect_summary() -> dict[str, Any]:
@@ -100,8 +98,9 @@ def render_page() -> bytes:
     status = 'Çalışıyor' if summary['configured'] else 'Ayar bekliyor'
     status_class = 'status-ok' if summary['configured'] else 'status-warn'
     error_class = 'status-error' if int(summary['errors']) > 0 else ''
-    log_url = f"/hassio/addon/{addon_id_candidates()[0]}/logs"
-    config_url = f"/hassio/addon/{addon_id_candidates()[0]}/config"
+    addon_id = current_addon_id()
+    log_url = f'/hassio/addon/{addon_id}/logs'
+    addon_url = f'/hassio/addon/{addon_id}'
     cards = [
         ('Durum', status, status_class),
         ('Kontrol aralığı', f"{summary['interval']} dakika", ''),
@@ -157,10 +156,10 @@ def render_page() -> bytes:
       <p>Bu sayfa Home Assistant kenar çubuğu için kısa durum ekranıdır. Fiyat takibi arka planda çalışmaya devam eder.</p>
       <div class="actions">
         <a class="button primary" href="{escape(log_url)}" target="_top">Kayıtları Aç</a>
-        <a class="button secondary" href="{escape(config_url)}" target="_top">Ayarları Aç</a>
+        <a class="button secondary" href="{escape(addon_url)}" target="_top">Add-on Sayfasını Aç</a>
       </div>
       <div class="grid">{card_html}</div>
-      <p class="note">Kayıt ve ayar butonları Home Assistant add-on sayfasındaki ilgili sekmeleri açar. Hata sayısı yalnızca son 24 saati kapsar.</p>
+      <p class="note">Ayarları değiştirmek için <strong>Add-on Sayfasını Aç</strong> butonuna basıp Configuration sekmesine geç. Hata sayısı yalnızca son 24 saati kapsar.</p>
       <p class="footer">Sayfa 60 saniyede bir otomatik yenilenir.</p>
     </div>
   </main>
