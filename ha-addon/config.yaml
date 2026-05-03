@@ -1,5 +1,5 @@
 name: Amazon TR Price Tracker
-version: "1.2.8"
+version: "1.2.9"
 slug: amazon_tr_price_tracker
 description: amazon.com.tr fiyatlarını izler ve Pushover bildirimi yollar.
 url: https://example.com/amazon-tr-price-tracker
@@ -10,6 +10,10 @@ arch:
 startup: services
 boot: auto
 init: false
+ingress: true
+ingress_port: 8099
+panel_title: Amazon Tracker
+panel_icon: mdi:bell-alert
 options:
   interval_minutes: 30
   request_timeout_seconds: 20
