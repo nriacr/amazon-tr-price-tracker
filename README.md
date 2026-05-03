@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.8
+1.2.9
 ```
 
-Bu surum Home Assistant arayuzunde logonun ustten kirpilmasina karsi `logo.png` tasarimini ust guvenli alana tasir. Kucuk liste ikonu icin `icon.png` daha sade ve okunur kare ikon olarak yenilendi.
+Bu surum Home Assistant add-on Info ekraninda `Show in sidebar` destegi getirir. Kenar cubuguna eklenince tracker icin kisa bir durum sayfasi acilir; fiyat takip motoru arka planda aynen calismaya devam eder.
 
 ## Ne Yapar?
 
@@ -23,9 +23,21 @@ Bu surum Home Assistant arayuzunde logonun ustten kirpilmasina karsi `logo.png` 
 - Ayni urun ayni fiyatta kalirsa 24 saat icinde tekrar bildirim gondermez.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
 - Her arama turunun sonunda eslesen urunleri tek fiyat ozeti tablosunda gosterir.
+- Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
 - Arama hatalarinda Pushover ile uyari gonderir.
 - Amazon gecici `429/5xx` hatalarinda tekrar dener ve gerekirse soguma uygular.
 - Loglari yerel saatle yazar ve her turun sonunda sonraki kontrol zamanini gosterir.
+
+## Sidebar Kullanimi
+
+Add-on guncellendikten ve yeniden baslatildiktan sonra Home Assistant add-on Info ekraninda `Show in sidebar` secenegi gorunur.
+
+1. Add-on sayfasinda `Check for updates` ve ardindan `Update` calistir.
+2. Add-on'u yeniden baslat.
+3. Add-on Info ekraninda `Show in sidebar` secenegini ac.
+4. Sol menude `Amazon Tracker` kisayolu gorunur.
+
+Sidebar sayfasi 60 saniyede bir otomatik yenilenir. Ayar degistirmek icin yine add-on `Configuration` sekmesini, ayrintili takip icin `Log` sekmesini kullan.
 
 ## Ornek Log Tablosu
 
