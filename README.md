@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.11
+1.2.12
 ```
 
-Bu surum sidebar durum ekranindaki metinleri daha tutarli Turkcelestirir. `Kayitli hata` alani `Hata sayisi` olarak degistirildi; calisan durum yesil, hata sayisi varsa kirmizi vurgulanir.
+Bu surum sidebar durum ekranindaki `Hata sayisi` alanini son 24 saatle sinirlar. Eski state kayitlarinda kalmis bayat hatalar artik sayaci sisirmez; 24 saatten eski hatalar ekranda otomatik olarak dusmus kabul edilir.
 
 ## Ne Yapar?
 
@@ -25,6 +25,7 @@ Bu surum sidebar durum ekranindaki metinleri daha tutarli Turkcelestirir. `Kayit
 - Her arama turunun sonunda eslesen urunleri tek fiyat ozeti tablosunda gosterir.
 - Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
 - Sidebar ekranindan kayit ve ayar sekmelerine kisa yol sunar.
+- Sidebar hata sayisini sadece son 24 saat icin hesaplar.
 - Arama hatalarinda Pushover ile uyari gonderir.
 - Amazon gecici `429/5xx` hatalarinda tekrar dener ve gerekirse soguma uygular.
 - Loglari yerel saatle yazar ve her turun sonunda sonraki kontrol zamanini gosterir.
@@ -40,7 +41,7 @@ Add-on guncellendikten ve yeniden baslatildiktan sonra Home Assistant add-on Inf
 5. Sidebar ekranindaki `Kayitlari Ac` butonu add-on Log sekmesini acar.
 6. Sidebar ekranindaki `Ayarlari Ac` butonu add-on Configuration sekmesini acar.
 
-Sidebar sayfasi 60 saniyede bir otomatik yenilenir. Ayar degistirmek icin yine add-on `Configuration` sekmesini, ayrintili takip icin `Log` sekmesini kullan.
+Sidebar sayfasi 60 saniyede bir otomatik yenilenir. `Hata sayisi` yalnizca son 24 saatte kaydedilen hatalari sayar. Ayar degistirmek icin yine add-on `Configuration` sekmesini, ayrintili takip icin `Log` sekmesini kullan.
 
 ## Ornek Log Tablosu
 
@@ -94,7 +95,6 @@ search_pages:
   - name: "mac ikinci el"
     search_url: "https://www.amazon.com.tr/s?k=macbook&i=warehouse-deals"
     max_items_to_scan: 40
-    notify_once_in_24H: true
 search_targets:
   - name: "iPad Air 13 M4"
     search_name: "ipad ikinci el"
