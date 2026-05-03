@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-1.2.9
+1.2.10
 ```
 
-Bu surum Home Assistant add-on Info ekraninda `Show in sidebar` destegi getirir. Kenar cubuguna eklenince tracker icin kisa bir durum sayfasi acilir; fiyat takip motoru arka planda aynen calismaya devam eder.
+Bu surum sidebar durum ekranina `Loglari Ac` ve `Ayarlari Ac` kisayollari ekler. Butonlar Home Assistant add-on sayfasindaki ilgili sekmeleri acacak sekilde ayarlandi.
 
 ## Ne Yapar?
 
@@ -24,6 +24,7 @@ Bu surum Home Assistant add-on Info ekraninda `Show in sidebar` destegi getirir.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
 - Her arama turunun sonunda eslesen urunleri tek fiyat ozeti tablosunda gosterir.
 - Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
+- Sidebar ekranindan Log ve Configuration sekmelerine kisa yol sunar.
 - Arama hatalarinda Pushover ile uyari gonderir.
 - Amazon gecici `429/5xx` hatalarinda tekrar dener ve gerekirse soguma uygular.
 - Loglari yerel saatle yazar ve her turun sonunda sonraki kontrol zamanini gosterir.
@@ -36,6 +37,8 @@ Add-on guncellendikten ve yeniden baslatildiktan sonra Home Assistant add-on Inf
 2. Add-on'u yeniden baslat.
 3. Add-on Info ekraninda `Show in sidebar` secenegini ac.
 4. Sol menude `Amazon Tracker` kisayolu gorunur.
+5. Sidebar ekranindaki `Loglari Ac` butonu add-on Log sekmesini acar.
+6. Sidebar ekranindaki `Ayarlari Ac` butonu add-on Configuration sekmesini acar.
 
 Sidebar sayfasi 60 saniyede bir otomatik yenilenir. Ayar degistirmek icin yine add-on `Configuration` sekmesini, ayrintili takip icin `Log` sekmesini kullan.
 
