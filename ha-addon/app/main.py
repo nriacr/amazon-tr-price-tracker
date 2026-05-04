@@ -513,7 +513,7 @@ def log_search_price_summary(rows: List[SearchPriceLogRow]) -> None:
         log("Ozet: eslesen=0")
         return
 
-    rows.sort(key=lambda row: (normalize_text(row.product_title), row.price))
+    rows.sort(key=lambda row: row.price - row.target_price, reverse=True)
     no_width = 3
     product_width = 40
     price_width = 10
