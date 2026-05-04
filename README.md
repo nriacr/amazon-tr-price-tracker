@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-2.1
+2.2
 ```
 
-Bu surumde loglardaki fiyat ozeti tablosuna `products` altinda takip edilen dogrudan urun linkleri de eklendi. Boylece dogrudan urun takipleri ve arama sayfasi eslesmeleri ayni tabloda gorunur.
+Bu surumde loglardaki fiyat ozeti tablosu `Fark` sutununa gore buyukten kucuge siralanir. Hedef fiyattan en cok uzak olan urunler en ustte gorunur.
 
 ## Ne Yapar?
 
@@ -23,6 +23,7 @@ Bu surumde loglardaki fiyat ozeti tablosuna `products` altinda takip edilen dogr
 - Ayni urun ayni fiyatta kalirsa 24 saat icinde tekrar bildirim gondermez.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
 - Her kontrol turunun sonunda dogrudan urunleri ve arama eslesmelerini tek fiyat ozeti tablosunda gosterir.
+- Fiyat ozeti tablosunu fark tutarina gore buyukten kucuge siralar.
 - Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
 - Sidebar ekranindan kayitlara ve add-on sayfasina kisa yol sunar.
 - Sidebar hata sayisini sadece son 24 saat icin hesaplar.
@@ -46,7 +47,7 @@ Sidebar sayfasi 60 saniyede bir otomatik yenilenir. `Hata sayisi` yalnizca son 2
 
 ## Ornek Log Tablosu
 
-Kontrol turundaki dogrudan urunler ve arama hedefleri kontrol edildikten sonra loglarda buna benzer bir tablo gorunur:
+Kontrol turundaki dogrudan urunler ve arama hedefleri kontrol edildikten sonra loglarda buna benzer bir tablo gorunur. Satirlar `Fark` sutununa gore buyukten kucuge siralanir:
 
 ```txt
 [2026-05-02 12:10:05] Ozet: eslesen=4
@@ -54,8 +55,8 @@ Kontrol turundaki dogrudan urunler ve arama hedefleri kontrol edildikten sonra l
 [2026-05-02 12:10:05] ----+------------------------------------------+------------+------------+-----------
 [2026-05-02 12:10:05]   1 | Apple iPad Air 13 inc (M4): Liquid Ret... |  46.169,10 |  40.000,00 |  +6.169,10
 [2026-05-02 12:10:05]   2 | Philips Hue Essential Akilli LED Ampul... |   3.771,49 |   2.000,00 |  +1.771,49
-[2026-05-02 12:10:05]   3 | Tapo C425 Kablosuz Guvenlik Kamerasi      |   3.424,20 |   3.100,00 |    +324,20
-[2026-05-02 12:10:05]   4 | Ugreen 100W Sarj Cihazi                   |   1.899,00 |   1.500,00 |    +399,00
+[2026-05-02 12:10:05]   3 | Ugreen 100W Sarj Cihazi                   |   1.899,00 |   1.500,00 |    +399,00
+[2026-05-02 12:10:05]   4 | Tapo C425 Kablosuz Guvenlik Kamerasi      |   3.424,20 |   3.100,00 |    +324,20
 ```
 
 Tablodaki `Urun Adi`, dogrudan urunlerde config ekraninda yazdigin `name` alanindan gelir; name yoksa Amazon'dan okunan baslik kullanilir. Arama sonuc satirlarinda Amazon'dan bulunan gercek urun basligi gorunur.
