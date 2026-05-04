@@ -7,10 +7,10 @@ Ana hedef ortam `Home Assistant OS` yuklu Raspberry Pi'dir. Kodlar GitHub'da sak
 ## Guncel Surum
 
 ```txt
-2.0
+2.1
 ```
 
-Bu surumle versiyonlama iki basamakli duzene gecirildi. Bundan sonra surumler `2.1`, `2.2`, `2.3` seklinde ilerler. Sidebar ekranindaki ayar kisayolu da daha guvenli hale getirildi: dogrudan hassas sekme adresine gitmek yerine add-on sayfasini acar; ayar degistirmek icin acilan sayfada Configuration sekmesine gecilir.
+Bu surumde loglardaki fiyat ozeti tablosuna `products` altinda takip edilen dogrudan urun linkleri de eklendi. Boylece dogrudan urun takipleri ve arama sayfasi eslesmeleri ayni tabloda gorunur.
 
 ## Ne Yapar?
 
@@ -22,7 +22,7 @@ Bu surumle versiyonlama iki basamakli duzene gecirildi. Bundan sonra surumler `2
 - Arama sonuc sayfasinin altindaki onerilen/alternatif urun bloklarini yok sayar.
 - Ayni urun ayni fiyatta kalirsa 24 saat icinde tekrar bildirim gondermez.
 - Ayni urun daha dusuk fiyata inerse 24 saati beklemeden yeniden bildirim gonderir.
-- Her arama turunun sonunda eslesen urunleri tek fiyat ozeti tablosunda gosterir.
+- Her kontrol turunun sonunda dogrudan urunleri ve arama eslesmelerini tek fiyat ozeti tablosunda gosterir.
 - Home Assistant kenar cubugunda kisa durum sayfasi gosterebilir.
 - Sidebar ekranindan kayitlara ve add-on sayfasina kisa yol sunar.
 - Sidebar hata sayisini sadece son 24 saat icin hesaplar.
@@ -46,18 +46,19 @@ Sidebar sayfasi 60 saniyede bir otomatik yenilenir. `Hata sayisi` yalnizca son 2
 
 ## Ornek Log Tablosu
 
-Arama dongusundeki tum hedefler kontrol edildikten sonra loglarda buna benzer bir tablo gorunur:
+Kontrol turundaki dogrudan urunler ve arama hedefleri kontrol edildikten sonra loglarda buna benzer bir tablo gorunur:
 
 ```txt
-[2026-05-02 12:10:05] Ozet: eslesen=3
+[2026-05-02 12:10:05] Ozet: eslesen=4
 [2026-05-02 12:10:05]  No | Urun Adi                                 |      Fiyat |      Hedef |       Fark
 [2026-05-02 12:10:05] ----+------------------------------------------+------------+------------+-----------
-[2026-05-02 12:10:05]   1 | Philips Hue Essential Akilli LED Ampul... |   3.771,49 |   2.000,00 |  +1.771,49
-[2026-05-02 12:10:05]   2 | Apple iPad Air 13 inc (M4): Liquid Ret... |  46.169,10 |  40.000,00 |  +6.169,10
+[2026-05-02 12:10:05]   1 | Apple iPad Air 13 inc (M4): Liquid Ret... |  46.169,10 |  40.000,00 |  +6.169,10
+[2026-05-02 12:10:05]   2 | Philips Hue Essential Akilli LED Ampul... |   3.771,49 |   2.000,00 |  +1.771,49
 [2026-05-02 12:10:05]   3 | Tapo C425 Kablosuz Guvenlik Kamerasi      |   3.424,20 |   3.100,00 |    +324,20
+[2026-05-02 12:10:05]   4 | Ugreen 100W Sarj Cihazi                   |   1.899,00 |   1.500,00 |    +399,00
 ```
 
-Tablodaki `Urun Adi`, Amazon arama sonucunda bulunan gercek urun basligidir. Config ekraninda yazdigin `product_name` ise sadece eslesme yapmak icin kullanilir. Hedef fiyat ve altindaki urunler icin Pushover bildirim akisi aynen calismaya devam eder.
+Tablodaki `Urun Adi`, dogrudan urunlerde config ekraninda yazdigin `name` alanindan gelir; name yoksa Amazon'dan okunan baslik kullanilir. Arama sonuc satirlarinda Amazon'dan bulunan gercek urun basligi gorunur.
 
 ## Ornek Yapilandirma
 
@@ -68,7 +69,10 @@ interval_minutes: 30
 request_timeout_seconds: 20
 pushover_user_key: "PUSHOVER_USER_KEY"
 pushover_api_token: "PUSHOVER_APP_TOKEN"
-products: []
+products:
+  - name: "Ugreen 100W Sarj Cihazi"
+    url: "https://www.amazon.com.tr/dp/ORNEKASIN1"
+    target_price: 1500
 search_pages:
   - name: "ipad ikinci el"
     search_url: "https://www.amazon.com.tr/s?k=ipad&i=warehouse-deals"
@@ -109,20 +113,27 @@ search_targets:
 
 ## UI Uzerinden Giris
 
-1. `search_pages` bolumunde `Add` de.
-2. `name` alanina arama sayfasinin kisa adini yaz. Ornek: `ipad ikinci el`.
-3. `search_url` alanina ana Amazon arama linkini yapistir.
-4. `search_url_2` alanina istersen ikinci arama linkini yapistir.
-5. `max_items_to_scan` icin ornek `40` yaz.
-6. `notify_once_in_24H` acik kalsin.
-7. `search_targets` bolumunde takip edecegin her urun hedefi icin `Add` de.
-8. `name` alanina hedefin kisa adini yaz.
-9. Tek arama sayfan varsa `search_name` bos kalabilir.
-10. Birden fazla arama sayfan varsa `search_name` alanina ilgili arama sayfasi adini aynen yaz.
-11. `product_name` alanina Amazon sonuc basliginda aranacak metni yaz.
-12. `target_price` alanina hedef fiyati yaz.
+1. `products` bolumunde dogrudan takip edecegin urun linklerini ekle.
+2. `search_pages` bolumunde `Add` de.
+3. `name` alanina arama sayfasinin kisa adini yaz. Ornek: `ipad ikinci el`.
+4. `search_url` alanina ana Amazon arama linkini yapistir.
+5. `search_url_2` alanina istersen ikinci arama linkini yapistir.
+6. `max_items_to_scan` icin ornek `40` yaz.
+7. `notify_once_in_24H` acik kalsin.
+8. `search_targets` bolumunde takip edecegin her urun hedefi icin `Add` de.
+9. `name` alanina hedefin kisa adini yaz.
+10. Tek arama sayfan varsa `search_name` bos kalabilir.
+11. Birden fazla arama sayfan varsa `search_name` alanina ilgili arama sayfasi adini aynen yaz.
+12. `product_name` alanina Amazon sonuc basliginda aranacak metni yaz.
+13. `target_price` alanina hedef fiyati yaz.
 
 ## Alanlar
+
+`products` alanlari:
+
+- `name`: Dogrudan takip edilen urunun kisa adi. Log tablosunda gorunur.
+- `url`: Dogrudan Amazon urun linki.
+- `target_price`: Bu fiyat ve altinda bildirim gonderilir.
 
 `search_pages` alanlari:
 
