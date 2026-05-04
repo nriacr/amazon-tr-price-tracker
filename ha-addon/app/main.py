@@ -826,6 +826,13 @@ def check_products_once() -> None:
                 f"Kontrol edildi: {display_name} | fiyat={current_price} TL | "
                 f"hedef={product.target_price} TL"
             )
+            search_price_log_rows.append(
+                SearchPriceLogRow(
+                    product_title=display_name,
+                    price=current_price,
+                    target_price=product.target_price,
+                )
+            )
 
             alert_sent = False
             if should_alert(state_entry, current_price, product.target_price):
@@ -1032,7 +1039,7 @@ def check_products_once() -> None:
             updated_watch_state["last_checked_at"] = utc_now()
             state[watch_key] = updated_watch_state
 
-    if search_watches:
+    if products or search_watches:
         log_search_price_summary(search_price_log_rows)
     save_json(STATE_PATH, state)
 
